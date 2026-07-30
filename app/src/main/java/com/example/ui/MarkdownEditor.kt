@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -141,91 +142,95 @@ fun MarkdownEditor(
                         .padding(innerPadding)
                         .verticalScroll(rememberScrollState())
                 ) {
-                    TextField(
-                        value = title,
-                        onValueChange = { title = it },
-                        placeholder = { Text("Title", fontSize = 22.sp) },
-                        singleLine = true,
-                        textStyle = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 22.sp
-                        ),
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                    )
+                    SelectionContainer {
+                        Column {
+                            TextField(
+                                value = title,
+                                onValueChange = { title = it },
+                                placeholder = { Text("Title", fontSize = 22.sp) },
+                                singleLine = true,
+                                textStyle = MaterialTheme.typography.headlineSmall.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 22.sp
+                                ),
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                            )
 
-                    if (currentTags.isNotEmpty()) {
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
-                        ) {
-                            items(currentTags) { tag ->
-                                Surface(
-                                    onClick = { toggleTag(tag) },
-                                    shape = RoundedCornerShape(16.dp),
-                                    color = MaterialTheme.colorScheme.surfaceVariant
+                            if (currentTags.isNotEmpty()) {
+                                LazyRow(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
                                 ) {
-                                    Text(
-                                        text = "#$tag",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                    ) {
-                        when (viewMode) {
-                            EditorViewMode.EDIT -> {
-                                TextField(
-                                    value = content,
-                                    onValueChange = { content = it },
-                                    placeholder = { Text("Note") },
-                                    colors = TextFieldDefaults.colors(
-                                        focusedContainerColor = Color.Transparent,
-                                        unfocusedContainerColor = Color.Transparent,
-                                        focusedIndicatorColor = Color.Transparent,
-                                        unfocusedIndicatorColor = Color.Transparent
-                                    ),
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                            EditorViewMode.PREVIEW -> {
-                                Box(modifier = Modifier.padding(horizontal = 12.dp)) {
-                                    MarkdownContent(content = content) { lineIndex ->
-                                        content = MarkdownHelper.toggleTodoAtLine(content, lineIndex)
+                                    items(currentTags) { tag ->
+                                        Surface(
+                                            onClick = { toggleTag(tag) },
+                                            shape = RoundedCornerShape(16.dp),
+                                            color = MaterialTheme.colorScheme.surfaceVariant
+                                        ) {
+                                            Text(
+                                                text = "#$tag",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
-                            EditorViewMode.SPLIT -> {
-                                Column {
-                                    TextField(
-                                        value = content,
-                                        onValueChange = { content = it },
-                                        colors = TextFieldDefaults.colors(
-                                            focusedContainerColor = Color.Transparent,
-                                            unfocusedContainerColor = Color.Transparent,
-                                            focusedIndicatorColor = Color.Transparent,
-                                            unfocusedIndicatorColor = Color.Transparent
-                                        ),
-                                        modifier = Modifier.fillMaxWidth()
-                                    )
-                                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                                    Box(modifier = Modifier.padding(horizontal = 12.dp)) {
-                                        MarkdownContent(content = content) { lineIndex ->
-                                            content = MarkdownHelper.toggleTodoAtLine(content, lineIndex)
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                            ) {
+                                when (viewMode) {
+                                    EditorViewMode.EDIT -> {
+                                        TextField(
+                                            value = content,
+                                            onValueChange = { content = it },
+                                            placeholder = { Text("Note") },
+                                            colors = TextFieldDefaults.colors(
+                                                focusedContainerColor = Color.Transparent,
+                                                unfocusedContainerColor = Color.Transparent,
+                                                focusedIndicatorColor = Color.Transparent,
+                                                unfocusedIndicatorColor = Color.Transparent
+                                            ),
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
+                                    EditorViewMode.PREVIEW -> {
+                                        Box(modifier = Modifier.padding(horizontal = 12.dp)) {
+                                            MarkdownContent(content = content) { lineIndex ->
+                                                content = MarkdownHelper.toggleTodoAtLine(content, lineIndex)
+                                            }
+                                        }
+                                    }
+                                    EditorViewMode.SPLIT -> {
+                                        Column {
+                                            TextField(
+                                                value = content,
+                                                onValueChange = { content = it },
+                                                colors = TextFieldDefaults.colors(
+                                                    focusedContainerColor = Color.Transparent,
+                                                    unfocusedContainerColor = Color.Transparent,
+                                                    focusedIndicatorColor = Color.Transparent,
+                                                    unfocusedIndicatorColor = Color.Transparent
+                                                ),
+                                                modifier = Modifier.fillMaxWidth()
+                                            )
+                                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                                            Box(modifier = Modifier.padding(horizontal = 12.dp)) {
+                                                MarkdownContent(content = content) { lineIndex ->
+                                                    content = MarkdownHelper.toggleTodoAtLine(content, lineIndex)
+                                                }
+                                            }
                                         }
                                     }
                                 }
