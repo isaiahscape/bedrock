@@ -43,7 +43,8 @@ fun TodoEditor(
     availableTags: List<Tag>,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: androidx.compose.animation.AnimatedVisibilityScope,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenCommandPalette: () -> Unit
 ) {
     var title by remember { mutableStateOf(existingNote?.title ?: "") }
     
@@ -265,7 +266,7 @@ fun TodoEditor(
                                     onBack()
                                 }
                             },
-                            onOpenCommandPalette = { /* Palette */ },
+                            onOpenCommandPalette = onOpenCommandPalette,
                             onDismiss = { showActionMenu = false }
                         )
                     }

@@ -35,7 +35,8 @@ fun NoteEditScreen(
     availableTags: List<Tag>,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenCommandPalette: () -> Unit
 ) {
     val existingNote = remember(noteId, allNotes) {
         if (noteId != 0L) allNotes.find { it.id == noteId } else null
@@ -49,7 +50,8 @@ fun NoteEditScreen(
             availableTags = availableTags,
             sharedTransitionScope = sharedTransitionScope,
             animatedVisibilityScope = animatedVisibilityScope,
-            onBack = onBack
+            onBack = onBack,
+            onOpenCommandPalette = onOpenCommandPalette
         )
         return
     }
@@ -62,7 +64,8 @@ fun NoteEditScreen(
             availableTags = availableTags,
             sharedTransitionScope = sharedTransitionScope,
             animatedVisibilityScope = animatedVisibilityScope,
-            onBack = onBack
+            onBack = onBack,
+            onOpenCommandPalette = onOpenCommandPalette
         )
         return
     }
@@ -244,7 +247,7 @@ fun NoteEditScreen(
                                     onBack()
                                 }
                             },
-                            onOpenCommandPalette = { /* Palette */ },
+                            onOpenCommandPalette = onOpenCommandPalette,
                             onDismiss = { showActionMenu = false }
                         )
                     }

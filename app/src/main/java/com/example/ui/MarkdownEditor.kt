@@ -36,7 +36,8 @@ fun MarkdownEditor(
     availableTags: List<Tag>,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenCommandPalette: () -> Unit
 ) {
     var title by remember { mutableStateOf(existingNote?.title ?: "") }
     var content by remember { mutableStateOf(existingNote?.content ?: "# ") }
@@ -269,7 +270,7 @@ fun MarkdownEditor(
                                     onBack()
                                 }
                             },
-                            onOpenCommandPalette = { /* Palette */ },
+                            onOpenCommandPalette = onOpenCommandPalette,
                             onDismiss = { showActionMenu = false }
                         )
                     }

@@ -147,7 +147,8 @@ fun BedrockApp(viewModel: NoteViewModel) {
                     availableTags = tags,
                     sharedTransitionScope = this@SharedTransitionLayout,
                     animatedVisibilityScope = this@composable,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onOpenCommandPalette = { showCommandPalette = true }
                 )
             }
 
