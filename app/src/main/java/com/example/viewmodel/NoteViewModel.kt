@@ -42,6 +42,18 @@ class NoteViewModel(
         initialValue = "1234"
     )
 
+    val userName: StateFlow<String> = preferenceManager.userName.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "Guest User"
+    )
+
+    val userImageUri: StateFlow<String?> = preferenceManager.userImageUri.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = null
+    )
+
     // Sync state
     val isOfflineMode: StateFlow<Boolean> = repository.isOfflineMode
     val syncLogs: Flow<List<SyncLog>> = repository.syncLogs
@@ -110,6 +122,18 @@ class NoteViewModel(
     fun setMasterPin(pin: String) {
         viewModelScope.launch {
             preferenceManager.setMasterPin(pin)
+        }
+    }
+
+    fun setUserName(name: String) {
+        viewModelScope.launch {
+            preferenceManager.setUserName(name)
+        }
+    }
+
+    fun setUserImageUri(uri: String?) {
+        viewModelScope.launch {
+            preferenceManager.setUserImageUri(uri)
         }
     }
 

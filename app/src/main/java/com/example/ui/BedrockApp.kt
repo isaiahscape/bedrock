@@ -35,12 +35,13 @@ fun BedrockApp(viewModel: NoteViewModel) {
     val syncMessage by viewModel.syncMessage.collectAsStateWithLifecycle()
     val masterPin by viewModel.masterPin.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
+    val userName by viewModel.userName.collectAsStateWithLifecycle()
+    val userImageUri by viewModel.userImageUri.collectAsStateWithLifecycle()
 
     val tags by viewModel.allTags.collectAsStateWithLifecycle(initialValue = emptyList())
     val syncLogs by viewModel.syncLogs.collectAsStateWithLifecycle(initialValue = emptyList())
 
     var showSyncCenterDialog by remember { mutableStateOf(false) }
-    var showProfileDialog by remember { mutableStateOf(false) }
     var showRecycleBinDialog by remember { mutableStateOf(false) }
     var showCommandPalette by remember { mutableStateOf(false) }
 
@@ -90,6 +91,8 @@ fun BedrockApp(viewModel: NoteViewModel) {
                     selectedTag = selectedTag,
                     unlockedNoteIds = unlockedNoteIds,
                     isOfflineMode = isOfflineMode,
+                    userName = userName,
+                    userImageUri = userImageUri,
                     sharedTransitionScope = this@SharedTransitionLayout,
                     animatedVisibilityScope = this@composable,
                     onNavigateToEditNote = { noteId ->
@@ -103,8 +106,6 @@ fun BedrockApp(viewModel: NoteViewModel) {
                         navController.navigate("note_edit/0?type=$type")
                     },
                     onOpenSyncCenter = { showSyncCenterDialog = true },
-                    onOpenSecuritySettings = { navController.navigate("settings") },
-                    onOpenProfile = { showProfileDialog = true },
                     onOpenSettings = { navController.navigate("settings") },
                     onOpenRecycleBin = { showRecycleBinDialog = true }
                 )
@@ -190,19 +191,6 @@ fun BedrockApp(viewModel: NoteViewModel) {
             onDismiss = {
                 showSyncCenterDialog = false
                 viewModel.clearSyncMessage()
-            }
-        )
-    }
-
-    if (showProfileDialog) {
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { showProfileDialog = false },
-            title = { androidx.compose.material3.Text("Profile") },
-            text = { androidx.compose.material3.Text("Profile page coming soon.") },
-            confirmButton = {
-                androidx.compose.material3.TextButton(onClick = { showProfileDialog = false }) {
-                    androidx.compose.material3.Text("OK")
-                }
             }
         )
     }

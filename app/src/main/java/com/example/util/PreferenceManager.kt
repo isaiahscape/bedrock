@@ -16,6 +16,8 @@ class PreferenceManager(private val context: Context) {
     companion object {
         val THEME_MODE = stringPreferencesKey("theme_mode")
         val MASTER_PIN = stringPreferencesKey("master_pin")
+        val USER_NAME = stringPreferencesKey("user_name")
+        val USER_IMAGE_URI = stringPreferencesKey("user_image_uri")
     }
 
     val themeMode: Flow<String> = context.dataStore.data.map { preferences ->
@@ -24,6 +26,14 @@ class PreferenceManager(private val context: Context) {
 
     val masterPin: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[MASTER_PIN] ?: "1234"
+    }
+
+    val userName: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[USER_NAME] ?: "Guest User"
+    }
+
+    val userImageUri: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[USER_IMAGE_URI]
     }
 
     suspend fun setThemeMode(mode: String) {
@@ -35,6 +45,22 @@ class PreferenceManager(private val context: Context) {
     suspend fun setMasterPin(pin: String) {
         context.dataStore.edit { preferences ->
             preferences[MASTER_PIN] = pin
+        }
+    }
+
+    suspend fun setUserName(name: String) {
+        context.dataStore.edit { preferences ->
+            preferences[USER_NAME] = name
+        }
+    }
+
+    suspend fun setUserImageUri(uri: String?) {
+        context.dataStore.edit { preferences ->
+            if (uri == null) {
+                preferences.remove(USER_IMAGE_URI)
+            } else {
+                preferences[USER_IMAGE_URI] = uri
+            }
         }
     }
 }

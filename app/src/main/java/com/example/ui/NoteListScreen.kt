@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.data.Note
 import com.example.data.Tag
 import com.example.util.MarkdownContent
@@ -43,13 +44,13 @@ fun NoteListScreen(
     selectedTag: String?,
     unlockedNoteIds: Set<Long>,
     isOfflineMode: Boolean,
+    userName: String,
+    userImageUri: String?,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     onNavigateToEditNote: (Long) -> Unit,
     onCreateNote: (String) -> Unit,
     onOpenSyncCenter: () -> Unit,
-    onOpenSecuritySettings: () -> Unit,
-    onOpenProfile: () -> Unit,
     onOpenSettings: () -> Unit,
     onOpenRecycleBin: () -> Unit
 ) {
@@ -60,7 +61,9 @@ fun NoteListScreen(
     var showAddTagDialog by remember { mutableStateOf(false) }
     var newTagName by remember { mutableStateOf("") }
     
-    var showProfileMenu by remember { mutableStateOf(false) }
+    var showProfileHub by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState()
+    
     var fabExpanded by remember { mutableStateOf(false) }
     val fabRotation by animateFloatAsState(targetValue = if (fabExpanded) 45f else 0f)
 
@@ -97,53 +100,23 @@ fun NoteListScreen(
                         Surface(
                             shape = CircleShape,
                             color = MaterialTheme.colorScheme.surfaceVariant,
-                            onClick = { showProfileMenu = true }
+                            onClick = { showProfileHub = true }
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = "Profile",
-                                modifier = Modifier.padding(12.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-
-                        DropdownMenu(
-                            expanded = showProfileMenu,
-                            onDismissRequest = { showProfileMenu = false },
-                            modifier = Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Profile") },
-                                onClick = { 
-                                    showProfileMenu = false 
-                                    onOpenProfile()
-                                },
-                                leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Security Settings") },
-                                onClick = { 
-                                    showProfileMenu = false
-                                    onOpenSecuritySettings()
-                                },
-                                leadingIcon = { Icon(Icons.Default.Security, contentDescription = null) }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Settings") },
-                                onClick = { 
-                                    showProfileMenu = false 
-                                    onOpenSettings()
-                                },
-                                leadingIcon = { Icon(Icons.Default.Settings, contentDescription = null) }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Recycle Bin") },
-                                onClick = { 
-                                    showProfileMenu = false 
-                                    onOpenRecycleBin()
-                                },
-                                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }
-                            )
+                            if (userImageUri != null) {
+                                AsyncImage(
+                                    model = userImageUri,
+                                    contentDescription = "Profile",
+                                    modifier = Modifier.size(48.dp).clip(CircleShape),
+                                    contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Profile",
+                                    modifier = Modifier.padding(12.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                     }
                 }
@@ -441,6 +414,29 @@ fun NoteListScreen(
                 }
             }
         )
+    }
+
+    if (showProfileHub) {
+        ModalBottomSheet(
+            onDismissRequest = { showProfileHub = false },
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.background,
+            dragHandle = { BottomSheetDefaults.DragHandle() }
+        ) {
+            ProfileHubContent(
+                viewModel = viewModel,
+                userName = userName,
+                userImageUri = userImageUri,
+                onNavigateToSettings = {
+                    showProfileHub = false
+                    onOpenSettings()
+                },
+                onOpenRecycleBin = {
+                    showProfileHub = false
+                    onOpenRecycleBin()
+                }
+            )
+        }
     }
 }
 
