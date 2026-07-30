@@ -47,6 +47,7 @@ fun NoteViewScreen(
     }
 
     var showActionMenu by remember { mutableStateOf(false) }
+    var showTemplateDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -154,6 +155,7 @@ fun NoteViewScreen(
                     exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
                 ) {
                     ActionPopUpMenu(
+                        onInsertTemplate = { showTemplateDialog = true },
                         onDeletePermanently = {
                             viewModel.deleteNote(noteId)
                             onBack()
@@ -244,10 +246,33 @@ fun NoteViewScreen(
             }
         }
     }
+
+    if (showTemplateDialog && note != null) {
+        TemplateSelectionDialog(
+            onDismiss = { showTemplateDialog = false },
+            onTemplateSelected = { template ->
+                val newContent = if (note.content.isBlank()) {
+                    template.content
+                } else {
+                    "${note.content}\n\n${template.content}"
+                }
+                viewModel.saveNote(
+                    id = note.id,
+                    title = note.title,
+                    content = newContent,
+                    tags = note.tags,
+                    isPinned = note.isPinned,
+                    isEncrypted = note.isEncrypted,
+                    passcode = note.passcodeHash
+                )
+            }
+        )
+    }
 }
 
 @Composable
 fun ActionPopUpMenu(
+    onInsertTemplate: () -> Unit,
     onDeletePermanently: () -> Unit,
     onOpenCommandPalette: () -> Unit,
     onDismiss: () -> Unit
@@ -264,7 +289,10 @@ fun ActionPopUpMenu(
             ActionMenuItem(
                 icon = Icons.Default.PostAdd,
                 label = "Insert template",
-                onClick = onDismiss
+                onClick = {
+                    onInsertTemplate()
+                    onDismiss()
+                }
             )
             ActionMenuItem(
                 icon = Icons.Default.Terminal,
