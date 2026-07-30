@@ -7,16 +7,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -25,6 +27,7 @@ import com.example.data.Note
 import com.example.util.MarkdownContent
 import com.example.viewmodel.NoteViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NoteViewScreen(
     noteId: Long,
@@ -38,7 +41,32 @@ fun NoteViewScreen(
     }
 
     Scaffold(
-        contentWindowInsets = WindowInsets(0, 0, 0, 0) // We'll manage padding ourselves
+        topBar = {
+            TopAppBar(
+                title = { },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                actions = {
+                    if (note != null) {
+                        IconButton(onClick = { viewModel.togglePin(note) }) {
+                            Icon(
+                                imageVector = if (note.isPinned) Icons.Default.PushPin else Icons.Outlined.PushPin,
+                                contentDescription = "Pin"
+                            )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
+            )
+        }
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -49,9 +77,8 @@ fun NoteViewScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .statusBarsPadding()
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp, vertical = 16.dp)
+                        .padding(horizontal = 20.dp, vertical = 8.dp)
                         .padding(bottom = 100.dp) // space for bottom bar
                 ) {
                     Text(
