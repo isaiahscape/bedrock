@@ -33,7 +33,7 @@ import com.example.data.Tag
 import com.example.util.MarkdownContent
 import com.example.viewmodel.NoteViewModel
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun NoteListScreen(
     viewModel: NoteViewModel,
@@ -43,6 +43,8 @@ fun NoteListScreen(
     selectedTag: String?,
     unlockedNoteIds: Set<Long>,
     isOfflineMode: Boolean,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onNavigateToEditNote: (Long) -> Unit,
     onCreateNote: (String) -> Unit,
     onOpenSyncCenter: () -> Unit,
@@ -333,6 +335,8 @@ fun NoteListScreen(
                         NoteCardItem(
                             note = note,
                             isUnlocked = !note.isEncrypted || unlockedNoteIds.contains(note.id),
+                            sharedTransitionScope = sharedTransitionScope,
+                            animatedVisibilityScope = animatedVisibilityScope,
                             onNoteClick = {
                                 if (note.isEncrypted && !unlockedNoteIds.contains(note.id)) {
                                     showUnlockDialogForNote = note
@@ -439,172 +443,192 @@ fun NoteListScreen(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun NoteCardItem(
     note: Note,
     isUnlocked: Boolean,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onNoteClick: () -> Unit
 ) {
     val (completedTodos, totalTodos) = remember(note.content) { note.getTodoStats() }
     val isEncryptedLocked = note.isEncrypted && !isUnlocked
     val isChecklist = totalTodos > 0 && !isEncryptedLocked
 
-    if (isEncryptedLocked) {
-        // Style 3: Encrypted Card
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            onClick = onNoteClick
-        ) {
-            Row(
-                modifier = Modifier.padding(20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+    with(sharedTransitionScope) {
+        if (isEncryptedLocked) {
+            // Style 3: Encrypted Card
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .sharedElement(
+                        rememberSharedContentState(key = "note_card_${note.id}"),
+                        animatedVisibilityScope = animatedVisibilityScope
+                    ),
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                onClick = onNoteClick
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    modifier = Modifier.padding(20.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = note.title,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "Locked",
+                                modifier = Modifier.size(16.dp),
+                                tint = Color(0xFFC09945) // Goldish lock color based on screenshot
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Encrypted locally • Synced 2m ago",
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        } else if (isChecklist) {
+            // Style 2: Checklist Card
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .sharedElement(
+                        rememberSharedContentState(key = "note_card_${note.id}"),
+                        animatedVisibilityScope = animatedVisibilityScope
+                    ),
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                onClick = onNoteClick
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Text(
                             text = note.title,
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,
                             color = MaterialTheme.colorScheme.onSurface
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
                         Icon(
-                            imageVector = Icons.Default.Lock,
-                            contentDescription = "Locked",
-                            modifier = Modifier.size(16.dp),
-                            tint = Color(0xFFC09945) // Goldish lock color based on screenshot
-                        )
-                    }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Encrypted locally • Synced 2m ago",
-                        fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Icon(
-                    imageVector = Icons.Default.ChevronRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-    } else if (isChecklist) {
-        // Style 2: Checklist Card
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            onClick = onNoteClick
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = note.title,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Icon(
-                        imageVector = Icons.Outlined.ShoppingCart,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Spacer(modifier = Modifier.height(16.dp))
-                // Extract top 2 checklist items
-                val lines = note.content.lines().filter { it.trim().startsWith("- [") || it.trim().startsWith("* [") }.take(2)
-                lines.forEach { line ->
-                    val isChecked = line.contains("[x]", ignoreCase = true)
-                    val text = line.substringAfter("]").trim()
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    ) {
-                        Icon(
-                            imageVector = if (isChecked) Icons.Default.CheckBox else Icons.Outlined.CheckBoxOutlineBlank,
+                            imageVector = Icons.Outlined.ShoppingCart,
                             contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                            tint = if (isChecked) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = text,
-                            color = if (isChecked) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
-                            textDecoration = if (isChecked) TextDecoration.LineThrough else null,
-                            fontSize = 15.sp
-                        )
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    // Extract top 2 checklist items
+                    val lines = note.content.lines().filter { it.trim().startsWith("- [") || it.trim().startsWith("* [") }.take(2)
+                    lines.forEach { line ->
+                        val isChecked = line.contains("[x]", ignoreCase = true)
+                        val text = line.substringAfter("]").trim()
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isChecked) Icons.Default.CheckBox else Icons.Outlined.CheckBoxOutlineBlank,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = if (isChecked) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = text,
+                                color = if (isChecked) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                                textDecoration = if (isChecked) TextDecoration.LineThrough else null,
+                                fontSize = 15.sp
+                            )
+                        }
                     }
                 }
             }
-        }
-    } else {
-        // Style 1: Dark Markdown Card
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            color = Color(0xFF1E1E1E), // Dark background
-            contentColor = Color.White,
-            onClick = onNoteClick
-        ) {
-            Column(modifier = Modifier.padding(20.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = note.title,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp,
-                        color = Color.White
-                    )
-                    Surface(
-                        shape = RoundedCornerShape(8.dp),
-                        color = Color(0xFF333333),
-                        contentColor = Color.White
+        } else {
+            // Style 1: Dark Markdown Card
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .sharedElement(
+                        rememberSharedContentState(key = "note_card_${note.id}"),
+                        animatedVisibilityScope = animatedVisibilityScope
+                    ),
+                shape = RoundedCornerShape(24.dp),
+                color = Color(0xFF1E1E1E), // Dark background
+                contentColor = Color.White,
+                onClick = onNoteClick
+            ) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "MARKDOWN",
-                            fontSize = 10.sp,
-                            letterSpacing = 1.sp,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            text = note.title,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            color = Color.White
                         )
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = Color(0xFF333333),
+                            contentColor = Color.White
+                        ) {
+                            Text(
+                                text = "MARKDOWN",
+                                fontSize = 10.sp,
+                                letterSpacing = 1.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
                     }
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = note.content.take(100).replace("\n", " "),
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 14.sp,
-                    color = Color.LightGray,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    lineHeight = 20.sp
-                )
-                val tagList = note.getTagList()
-                if (tagList.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        tagList.take(3).forEach { tag ->
-                            Surface(
-                                shape = CircleShape,
-                                color = Color(0xFF333333),
-                                contentColor = Color.White
-                            ) {
-                                Text(
-                                    text = "#$tag",
-                                    fontSize = 12.sp,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                                )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = note.content.take(100).replace("\n", " "),
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 14.sp,
+                        color = Color.LightGray,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                        lineHeight = 20.sp
+                    )
+                    val tagList = note.getTagList()
+                    if (tagList.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            tagList.take(3).forEach { tag ->
+                                Surface(
+                                    shape = CircleShape,
+                                    color = Color(0xFF333333),
+                                    contentColor = Color.White
+                                ) {
+                                    Text(
+                                        text = "#$tag",
+                                        fontSize = 12.sp,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                    )
+                                }
                             }
                         }
                     }

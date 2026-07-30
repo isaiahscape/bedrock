@@ -1,5 +1,6 @@
 package com.example.ui
 
+import androidx.compose.animation.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -13,6 +14,7 @@ import com.example.data.NoteRepository
 import com.example.viewmodel.NoteViewModel
 import com.example.viewmodel.NoteViewModelFactory
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun BedrockApp(viewModel: NoteViewModel) {
     val navController = rememberNavController()
@@ -34,79 +36,85 @@ fun BedrockApp(viewModel: NoteViewModel) {
     var showProfileDialog by remember { mutableStateOf(false) }
     var showRecycleBinDialog by remember { mutableStateOf(false) }
 
-    NavHost(
-        navController = navController,
-        startDestination = "note_list"
-    ) {
-        composable("note_list") {
-            NoteListScreen(
-                viewModel = viewModel,
-                notes = notes,
-                tags = tags,
-                searchQuery = searchQuery,
-                selectedTag = selectedTag,
-                unlockedNoteIds = unlockedNoteIds,
-                isOfflineMode = isOfflineMode,
-                onNavigateToEditNote = { noteId ->
-                    if (noteId == 0L) {
-                        navController.navigate("note_edit/0?type=note")
-                    } else {
-                        navController.navigate("note_view/$noteId")
+    SharedTransitionLayout {
+        NavHost(
+            navController = navController,
+            startDestination = "note_list"
+        ) {
+            composable("note_list") {
+                NoteListScreen(
+                    viewModel = viewModel,
+                    notes = notes,
+                    tags = tags,
+                    searchQuery = searchQuery,
+                    selectedTag = selectedTag,
+                    unlockedNoteIds = unlockedNoteIds,
+                    isOfflineMode = isOfflineMode,
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    animatedVisibilityScope = this@composable,
+                    onNavigateToEditNote = { noteId ->
+                        if (noteId == 0L) {
+                            navController.navigate("note_edit/0?type=note")
+                        } else {
+                            navController.navigate("note_view/$noteId")
+                        }
+                    },
+                    onCreateNote = { type ->
+                        navController.navigate("note_edit/0?type=$type")
+                    },
+                    onOpenSyncCenter = { showSyncCenterDialog = true },
+                    onOpenSecuritySettings = { navController.navigate("settings") },
+                    onOpenProfile = { showProfileDialog = true },
+                    onOpenSettings = { navController.navigate("settings") },
+                    onOpenRecycleBin = { showRecycleBinDialog = true }
+                )
+            }
+
+            composable(
+                route = "note_view/{noteId}",
+                arguments = listOf(navArgument("noteId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val noteId = backStackEntry.arguments?.getLong("noteId") ?: 0L
+                NoteViewScreen(
+                    noteId = noteId,
+                    viewModel = viewModel,
+                    allNotes = notes,
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    animatedVisibilityScope = this@composable,
+                    onBack = { navController.popBackStack() },
+                    onEditNote = { id ->
+                        navController.navigate("note_edit/$id?type=note")
                     }
-                },
-                onCreateNote = { type ->
-                    navController.navigate("note_edit/0?type=$type")
-                },
-                onOpenSyncCenter = { showSyncCenterDialog = true },
-                onOpenSecuritySettings = { navController.navigate("settings") },
-                onOpenProfile = { showProfileDialog = true },
-                onOpenSettings = { navController.navigate("settings") },
-                onOpenRecycleBin = { showRecycleBinDialog = true }
-            )
-        }
+                )
+            }
 
-        composable(
-            route = "note_view/{noteId}",
-            arguments = listOf(navArgument("noteId") { type = NavType.LongType })
-        ) { backStackEntry ->
-            val noteId = backStackEntry.arguments?.getLong("noteId") ?: 0L
-            NoteViewScreen(
-                noteId = noteId,
-                viewModel = viewModel,
-                allNotes = notes,
-                onBack = { navController.popBackStack() },
-                onEditNote = { id ->
-                    navController.navigate("note_edit/$id?type=note")
-                }
-            )
-        }
+            composable(
+                route = "note_edit/{noteId}?type={noteType}",
+                arguments = listOf(
+                    navArgument("noteId") { type = NavType.LongType },
+                    navArgument("type") { type = NavType.StringType; defaultValue = "note" }
+                )
+            ) { backStackEntry ->
+                val noteId = backStackEntry.arguments?.getLong("noteId") ?: 0L
+                val noteType = backStackEntry.arguments?.getString("type") ?: "note"
+                NoteEditScreen(
+                    noteId = noteId,
+                    noteType = noteType,
+                    viewModel = viewModel,
+                    allNotes = notes,
+                    availableTags = tags,
+                    onBack = { navController.popBackStack() }
+                )
+            }
 
-        composable(
-            route = "note_edit/{noteId}?type={noteType}",
-            arguments = listOf(
-                navArgument("noteId") { type = NavType.LongType },
-                navArgument("type") { type = NavType.StringType; defaultValue = "note" }
-            )
-        ) { backStackEntry ->
-            val noteId = backStackEntry.arguments?.getLong("noteId") ?: 0L
-            val noteType = backStackEntry.arguments?.getString("type") ?: "note"
-            NoteEditScreen(
-                noteId = noteId,
-                noteType = noteType,
-                viewModel = viewModel,
-                allNotes = notes,
-                availableTags = tags,
-                onBack = { navController.popBackStack() }
-            )
-        }
-
-        composable("settings") {
-            SettingsScreen(
-                viewModel = viewModel,
-                themeMode = themeMode,
-                masterPin = masterPin ?: "1234",
-                onBack = { navController.popBackStack() }
-            )
+            composable("settings") {
+                SettingsScreen(
+                    viewModel = viewModel,
+                    themeMode = themeMode,
+                    masterPin = masterPin ?: "1234",
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
     }
 
