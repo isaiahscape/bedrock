@@ -1,0 +1,240 @@
+package com.example.ui
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.data.Note
+import com.example.data.Tag
+import com.example.util.MarkdownContent
+import com.example.util.MarkdownHelper
+import com.example.viewmodel.NoteViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MarkdownEditor(
+    noteId: Long,
+    viewModel: NoteViewModel,
+    existingNote: Note?,
+    availableTags: List<Tag>,
+    onBack: () -> Unit
+) {
+    var title by remember { mutableStateOf(existingNote?.title ?: "") }
+    var content by remember { mutableStateOf(existingNote?.content ?: "# ") }
+    var tagsString by remember { mutableStateOf(existingNote?.tags ?: "") }
+    var isPinned by remember { mutableStateOf(existingNote?.isPinned ?: false) }
+    var isEncrypted by remember { mutableStateOf(existingNote?.isEncrypted ?: false) }
+    var passcode by remember { mutableStateOf(existingNote?.passcodeHash ?: "1234") }
+
+    var viewMode by remember { mutableStateOf(EditorViewMode.SPLIT) }
+    var showSecurityDialog by remember { mutableStateOf(false) }
+
+    val currentTags = remember(tagsString) {
+        if (tagsString.isBlank()) emptyList()
+        else tagsString.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            viewModel.saveNote(
+                                id = noteId,
+                                title = title,
+                                content = content,
+                                tags = tagsString,
+                                isPinned = isPinned,
+                                isEncrypted = isEncrypted,
+                                passcode = passcode
+                            )
+                            onBack()
+                        }
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { isPinned = !isPinned }) {
+                        Icon(
+                            imageVector = if (isPinned) Icons.Default.PushPin else Icons.Outlined.PushPin,
+                            contentDescription = "Pin"
+                        )
+                    }
+                    IconButton(onClick = { showSecurityDialog = true }) {
+                        Icon(
+                            imageVector = if (isEncrypted) Icons.Default.Lock else Icons.Outlined.Lock,
+                            contentDescription = "Security",
+                            tint = if (isEncrypted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    IconButton(
+                        onClick = {
+                            viewMode = when (viewMode) {
+                                EditorViewMode.EDIT -> EditorViewMode.PREVIEW
+                                EditorViewMode.PREVIEW -> EditorViewMode.SPLIT
+                                EditorViewMode.SPLIT -> EditorViewMode.EDIT
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = when (viewMode) {
+                                EditorViewMode.EDIT -> Icons.Default.Visibility
+                                EditorViewMode.PREVIEW -> Icons.Default.VerticalSplit
+                                EditorViewMode.SPLIT -> Icons.Default.Edit
+                            },
+                            contentDescription = "Toggle Mode"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+            )
+        },
+        bottomBar = {
+            if (viewMode != EditorViewMode.PREVIEW) {
+                BottomAppBar(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    contentPadding = PaddingValues(horizontal = 8.dp),
+                    modifier = Modifier.height(48.dp)
+                ) {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        item { ToolbarButton(label = "H1") { content = insertMarkdownSymbol(content, "# ") } }
+                        item { ToolbarButton(label = "H2") { content = insertMarkdownSymbol(content, "## ") } }
+                        item { ToolbarButton(label = "B") { content = insertMarkdownSymbol(content, "**Bold**") } }
+                        item { ToolbarButton(label = "I") { content = insertMarkdownSymbol(content, "*Italic*") } }
+                        item { ToolbarButton(label = "[ ]") { content = insertMarkdownSymbol(content, "- [ ] ") } }
+                        item { ToolbarButton(label = "•") { content = insertMarkdownSymbol(content, "- ") } }
+                        item { ToolbarButton(label = ">") { content = insertMarkdownSymbol(content, "> ") } }
+                    }
+                }
+            }
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
+        ) {
+            TextField(
+                value = title,
+                onValueChange = { title = it },
+                placeholder = { Text("Title", fontSize = 22.sp) },
+                singleLine = true,
+                textStyle = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 22.sp
+                ),
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp)
+            )
+
+            if (currentTags.isNotEmpty()) {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                ) {
+                    items(currentTags) { tag ->
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant
+                        ) {
+                            Text(
+                                text = tag,
+                                style = MaterialTheme.typography.labelSmall,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp)
+            ) {
+                when (viewMode) {
+                    EditorViewMode.EDIT -> {
+                        TextField(
+                            value = content,
+                            onValueChange = { content = it },
+                            placeholder = { Text("Note") },
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    EditorViewMode.PREVIEW -> {
+                        Box(modifier = Modifier.padding(horizontal = 12.dp)) {
+                            MarkdownContent(content = content) { lineIndex ->
+                                content = MarkdownHelper.toggleTodoAtLine(content, lineIndex)
+                            }
+                        }
+                    }
+                    EditorViewMode.SPLIT -> {
+                        Column {
+                            TextField(
+                                value = content,
+                                onValueChange = { content = it },
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                            Box(modifier = Modifier.padding(horizontal = 12.dp)) {
+                                MarkdownContent(content = content) { lineIndex ->
+                                    content = MarkdownHelper.toggleTodoAtLine(content, lineIndex)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    if (showSecurityDialog) {
+        SecurityDialog(
+            isEncrypted = isEncrypted,
+            onEncryptionChange = { isEncrypted = it },
+            passcode = passcode,
+            onPasscodeChange = { passcode = it },
+            onDismiss = { showSecurityDialog = false }
+        )
+    }
+}

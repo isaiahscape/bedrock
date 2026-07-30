@@ -1,0 +1,6 @@
+{
+  "name": "Bedrock",
+  "description": "Monochrome Markdown notes app with tags, embedded to-dos, offline sync, and encrypted local storage.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
