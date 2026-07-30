@@ -155,6 +155,23 @@ fun BedrockApp(viewModel: NoteViewModel) {
                 SettingsScreen(
                     viewModel = viewModel,
                     themeMode = themeMode,
+                    onNavigateToAppearance = { navController.navigate("settings_appearance") },
+                    onNavigateToSecurity = { navController.navigate("settings_security") },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable("settings_appearance") {
+                AppearanceSettingsScreen(
+                    viewModel = viewModel,
+                    themeMode = themeMode,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable("settings_security") {
+                SecuritySettingsScreen(
+                    viewModel = viewModel,
                     masterPin = masterPin ?: "1234",
                     onBack = { navController.popBackStack() }
                 )
