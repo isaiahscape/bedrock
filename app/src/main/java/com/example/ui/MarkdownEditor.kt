@@ -105,108 +105,66 @@ fun MarkdownEditor(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
-        },
-        bottomBar = {
-            if (viewMode != EditorViewMode.PREVIEW) {
-                BottomAppBar(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    contentPadding = PaddingValues(horizontal = 8.dp),
-                    modifier = Modifier.height(48.dp)
-                ) {
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        item { ToolbarButton(label = "H1") { content = insertMarkdownSymbol(content, "# ") } }
-                        item { ToolbarButton(label = "H2") { content = insertMarkdownSymbol(content, "## ") } }
-                        item { ToolbarButton(label = "B") { content = insertMarkdownSymbol(content, "**Bold**") } }
-                        item { ToolbarButton(label = "I") { content = insertMarkdownSymbol(content, "*Italic*") } }
-                        item { ToolbarButton(label = "[ ]") { content = insertMarkdownSymbol(content, "- [ ] ") } }
-                        item { ToolbarButton(label = "•") { content = insertMarkdownSymbol(content, "- ") } }
-                        item { ToolbarButton(label = ">") { content = insertMarkdownSymbol(content, "> ") } }
-                    }
-                }
-            }
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-        ) {
-            TextField(
-                value = title,
-                onValueChange = { title = it },
-                placeholder = { Text("Title", fontSize = 22.sp) },
-                singleLine = true,
-                textStyle = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 22.sp
-                ),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                ),
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp)
-            )
-
-            if (currentTags.isNotEmpty()) {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                ) {
-                    items(currentTags) { tag ->
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant
-                        ) {
-                            Text(
-                                text = tag,
-                                style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
-                    }
-                }
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp)
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
             ) {
-                when (viewMode) {
-                    EditorViewMode.EDIT -> {
-                        TextField(
-                            value = content,
-                            onValueChange = { content = it },
-                            placeholder = { Text("Note") },
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent
-                            ),
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                    EditorViewMode.PREVIEW -> {
-                        Box(modifier = Modifier.padding(horizontal = 12.dp)) {
-                            MarkdownContent(content = content) { lineIndex ->
-                                content = MarkdownHelper.toggleTodoAtLine(content, lineIndex)
+                TextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    placeholder = { Text("Title", fontSize = 22.sp) },
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 22.sp
+                    ),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                )
+
+                if (currentTags.isNotEmpty()) {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+                    ) {
+                        items(currentTags) { tag ->
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant
+                            ) {
+                                Text(
+                                    text = tag,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
                             }
                         }
                     }
-                    EditorViewMode.SPLIT -> {
-                        Column {
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    when (viewMode) {
+                        EditorViewMode.EDIT -> {
                             TextField(
                                 value = content,
                                 onValueChange = { content = it },
+                                placeholder = { Text("Note") },
                                 colors = TextFieldDefaults.colors(
                                     focusedContainerColor = Color.Transparent,
                                     unfocusedContainerColor = Color.Transparent,
@@ -215,15 +173,51 @@ fun MarkdownEditor(
                                 ),
                                 modifier = Modifier.fillMaxWidth()
                             )
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                        }
+                        EditorViewMode.PREVIEW -> {
                             Box(modifier = Modifier.padding(horizontal = 12.dp)) {
                                 MarkdownContent(content = content) { lineIndex ->
                                     content = MarkdownHelper.toggleTodoAtLine(content, lineIndex)
                                 }
                             }
                         }
+                        EditorViewMode.SPLIT -> {
+                            Column {
+                                TextField(
+                                    value = content,
+                                    onValueChange = { content = it },
+                                    colors = TextFieldDefaults.colors(
+                                        focusedContainerColor = Color.Transparent,
+                                        unfocusedContainerColor = Color.Transparent,
+                                        focusedIndicatorColor = Color.Transparent,
+                                        unfocusedIndicatorColor = Color.Transparent
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                                Box(modifier = Modifier.padding(horizontal = 12.dp)) {
+                                    MarkdownContent(content = content) { lineIndex ->
+                                        content = MarkdownHelper.toggleTodoAtLine(content, lineIndex)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
+                
+                Spacer(modifier = Modifier.height(80.dp))
+            }
+
+            // Floating Toolbar
+            if (viewMode != EditorViewMode.PREVIEW) {
+                FloatingFormattingToolbar(
+                    onAction = { syntax -> content = insertFormatting(content, syntax) },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 16.dp)
+                )
             }
         }
     }

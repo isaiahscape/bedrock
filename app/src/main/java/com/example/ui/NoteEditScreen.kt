@@ -120,76 +120,92 @@ fun NoteEditScreen(
             )
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-        ) {
-            TextField(
-                value = title,
-                onValueChange = { title = it },
-                placeholder = { Text("Title", fontSize = 22.sp) },
-                singleLine = true,
-                textStyle = MaterialTheme.typography.headlineSmall.copy(
-                    fontWeight = FontWeight.Medium,
-                    fontSize = 22.sp
-                ),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                ),
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp)
-            )
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                // Title Field
+                TextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    placeholder = { Text("Title", fontSize = 22.sp) },
+                    singleLine = true,
+                    textStyle = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 22.sp
+                    ),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp) // Adjusted for alignment
+                )
 
-            if (currentTags.isNotEmpty()) {
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                ) {
-                    items(currentTags) { tag ->
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant
-                        ) {
-                            Text(
-                                text = tag,
-                                style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
+                if (currentTags.isNotEmpty()) {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+                    ) {
+                        items(currentTags) { tag ->
+                            Surface(
+                                shape = RoundedCornerShape(16.dp),
+                                color = MaterialTheme.colorScheme.surfaceVariant
+                            ) {
+                                Text(
+                                    text = tag,
+                                    style = MaterialTheme.typography.labelSmall,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
                         }
                     }
                 }
+
+                // Content Field
+                TextField(
+                    value = content,
+                    onValueChange = { content = it },
+                    placeholder = { Text("Note") },
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 24.sp),
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = Color.Transparent,
+                        unfocusedContainerColor = Color.Transparent,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp) // Adjusted for alignment
+                )
+                
+                Spacer(modifier = Modifier.height(80.dp)) // Space for floating toolbar
+                
+                TextButton(
+                    onClick = { /* Tag picker */ },
+                    modifier = Modifier.padding(horizontal = 12.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Add Tags", style = MaterialTheme.typography.labelMedium)
+                }
             }
 
-            TextField(
-                value = content,
-                onValueChange = { content = it },
-                placeholder = { Text("Note") },
-                textStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 24.sp),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent
-                ),
+            // Floating Toolbar
+            FloatingFormattingToolbar(
+                onAction = { syntax -> content = insertFormatting(content, syntax) },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp)
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp)
             )
-            
-            TextButton(
-                onClick = { /* Tag picker */ },
-                modifier = Modifier.padding(horizontal = 8.dp)
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Add Tags", style = MaterialTheme.typography.labelMedium)
-            }
         }
     }
 
