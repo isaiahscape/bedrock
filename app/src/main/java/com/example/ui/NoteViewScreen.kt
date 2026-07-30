@@ -216,13 +216,13 @@ fun NoteViewScreen(
                                 )
                             }
                             IconButton(onClick = { onEditNote(noteId) }) {
-                                Icon(
-                                    imageVector = Icons.Filled.Add,
-                                    contentDescription = "Edit Note",
-                                    tint = Color(0xFFB0B0B0),
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit Note",
+                                tint = Color(0xFFB0B0B0),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
                             IconButton(onClick = { /* Tabs - placeholder */ }) {
                                 Box(
                                     contentAlignment = Alignment.Center,
