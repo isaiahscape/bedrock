@@ -1,12 +1,9 @@
 package com.example.ui
 
 import androidx.compose.animation.*
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -19,13 +16,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.R
 import com.example.data.Note
 import com.example.util.MarkdownContent
 import com.example.viewmodel.NoteViewModel
@@ -144,80 +138,58 @@ fun NoteViewScreen(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .navigationBarsPadding()
-                        .padding(bottom = 16.dp)
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Action Menu (Slide-up)
-                AnimatedVisibility(
-                    visible = showActionMenu,
-                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
-                ) {
-                    ActionPopUpMenu(
-                        onInsertTemplate = { showTemplateDialog = true },
-                        onDeletePermanently = {
-                            viewModel.deleteNote(noteId)
-                            onBack()
-                        },
-                        onOpenCommandPalette = onOpenCommandPalette,
-                        onDismiss = { showActionMenu = false }
-                    )
-                }
+                    AnimatedVisibility(
+                        visible = showActionMenu,
+                        enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                        exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+                    ) {
+                        ActionPopUpMenu(
+                            onInsertTemplate = { showTemplateDialog = true },
+                            onDeletePermanently = {
+                                viewModel.deleteNote(noteId)
+                                onBack()
+                            },
+                            onOpenCommandPalette = onOpenCommandPalette,
+                            onDismiss = { showActionMenu = false }
+                        )
+                    }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     // Pill Toolbar
-                    Surface(
-                        shape = RoundedCornerShape(32.dp),
-                        color = Color(0xFF1E1E1E),
-                        modifier = Modifier.wrapContentWidth()
+                    BreadcrumbPillToolbar(
+                        onLogoClick = { showActionMenu = !showActionMenu }
                     ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            // Breadcrumb Logo Trigger
-                            IconButton(onClick = { showActionMenu = !showActionMenu }) {
-                                Icon(
-                                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
-                                    contentDescription = "Actions",
-                                    tint = Color.Unspecified,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                            
-                            VerticalDivider(
-                                modifier = Modifier.height(24.dp).width(1.dp),
-                                color = Color(0xFF333333)
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                                contentDescription = "Back",
+                                tint = Color(0xFFB0B0B0),
+                                modifier = Modifier.size(24.dp)
                             )
-
-                            IconButton(onClick = onBack) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                    contentDescription = "Back",
-                                    tint = Color(0xFFB0B0B0),
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                            IconButton(onClick = { /* Forward - placeholder */ }) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                    contentDescription = "Forward",
-                                    tint = Color(0xFFB0B0B0),
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                            IconButton(onClick = { /* Search - placeholder */ }) {
-                                Icon(
-                                    imageVector = Icons.Filled.Search,
-                                    contentDescription = "Search",
-                                    tint = Color(0xFFB0B0B0),
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                            IconButton(onClick = { onEditNote(noteId) }) {
+                        }
+                        IconButton(onClick = { /* Forward - placeholder */ }) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                contentDescription = "Forward",
+                                tint = Color(0xFFB0B0B0),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        IconButton(onClick = { /* Search - placeholder */ }) {
+                            Icon(
+                                imageVector = Icons.Filled.Search,
+                                contentDescription = "Search",
+                                tint = Color(0xFFB0B0B0),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        IconButton(onClick = { onEditNote(noteId) }) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
                                 contentDescription = "Edit Note",
@@ -225,20 +197,19 @@ fun NoteViewScreen(
                                 modifier = Modifier.size(24.dp)
                             )
                         }
-                            IconButton(onClick = { /* Tabs - placeholder */ }) {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier
-                                        .size(22.dp)
-                                        .border(1.5.dp, Color(0xFFB0B0B0), RoundedCornerShape(6.dp))
-                                ) {
-                                    Text(
-                                        text = "1",
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFFB0B0B0)
-                                    )
-                                }
+                        IconButton(onClick = { /* Tabs - placeholder */ }) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .border(1.5.dp, Color(0xFFB0B0B0), RoundedCornerShape(6.dp))
+                            ) {
+                                Text(
+                                    text = "1",
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFB0B0B0)
+                                )
                             }
                         }
                     }
@@ -266,90 +237,6 @@ fun NoteViewScreen(
                     passcode = note.passcodeHash
                 )
             }
-        )
-    }
-}
-
-@Composable
-fun ActionPopUpMenu(
-    onInsertTemplate: () -> Unit,
-    onDeletePermanently: () -> Unit,
-    onOpenCommandPalette: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    Surface(
-        shape = RoundedCornerShape(24.dp),
-        color = Color(0xFF1E1E1E),
-        modifier = Modifier.wrapContentWidth()
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            ActionMenuItem(
-                icon = Icons.Default.PostAdd,
-                label = "Insert template",
-                onClick = {
-                    onInsertTemplate()
-                    onDismiss()
-                }
-            )
-            ActionMenuItem(
-                icon = Icons.Default.Terminal,
-                label = "Open command palette",
-                onClick = {
-                    onOpenCommandPalette()
-                    onDismiss()
-                }
-            )
-            ActionMenuItem(
-                icon = Icons.Default.DeleteOutline,
-                label = "Move to trash",
-                onClick = onDismiss
-            )
-            ActionMenuItem(
-                icon = Icons.Default.DeleteForever,
-                label = "Delete permanently",
-                onClick = {
-                    onDeletePermanently()
-                    onDismiss()
-                }
-            )
-            ActionMenuItem(
-                icon = Icons.Default.SwapHoriz,
-                label = "Open quick switcher",
-                onClick = onDismiss
-            )
-        }
-    }
-}
-
-@Composable
-fun ActionMenuItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-            .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = Color(0xFFB0B0B0),
-            modifier = Modifier.size(20.dp)
-        )
-        Text(
-            text = label,
-            color = Color(0xFFB0B0B0),
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium
         )
     }
 }

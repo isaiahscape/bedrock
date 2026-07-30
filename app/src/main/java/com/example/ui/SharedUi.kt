@@ -1,5 +1,8 @@
 package com.example.ui
 
+import androidx.compose.animation.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -8,10 +11,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 
 @Composable
 fun SecurityDialog(
@@ -44,6 +50,126 @@ fun SecurityDialog(
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Done") } }
     )
+}
+
+@Composable
+fun ActionPopUpMenu(
+    onInsertTemplate: () -> Unit,
+    onDeletePermanently: () -> Unit,
+    onOpenCommandPalette: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(24.dp),
+        color = Color(0xFF1E1E1E),
+        modifier = Modifier.wrapContentWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            ActionMenuItem(
+                icon = Icons.Default.PostAdd,
+                label = "Insert template",
+                onClick = {
+                    onInsertTemplate()
+                    onDismiss()
+                }
+            )
+            ActionMenuItem(
+                icon = Icons.Default.Terminal,
+                label = "Open command palette",
+                onClick = {
+                    onOpenCommandPalette()
+                    onDismiss()
+                }
+            )
+            ActionMenuItem(
+                icon = Icons.Default.DeleteOutline,
+                label = "Move to trash",
+                onClick = onDismiss
+            )
+            ActionMenuItem(
+                icon = Icons.Default.DeleteForever,
+                label = "Delete permanently",
+                onClick = {
+                    onDeletePermanently()
+                    onDismiss()
+                }
+            )
+            ActionMenuItem(
+                icon = Icons.Default.SwapHoriz,
+                label = "Open quick switcher",
+                onClick = onDismiss
+            )
+        }
+    }
+}
+
+@Composable
+fun ActionMenuItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color(0xFFB0B0B0),
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            text = label,
+            color = Color(0xFFB0B0B0),
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium
+        )
+    }
+}
+
+@Composable
+fun BreadcrumbPillToolbar(
+    onLogoClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable RowScope.() -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(32.dp),
+        color = Color(0xFF1E1E1E),
+        modifier = modifier.wrapContentWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Breadcrumb Logo Trigger
+            IconButton(onClick = onLogoClick) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                    contentDescription = "Actions",
+                    tint = Color.Unspecified,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            VerticalDivider(
+                modifier = Modifier.height(24.dp).width(1.dp),
+                color = Color(0xFF333333)
+            )
+
+            content()
+        }
+    }
 }
 
 @Composable

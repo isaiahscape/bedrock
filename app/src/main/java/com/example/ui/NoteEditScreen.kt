@@ -73,6 +73,8 @@ fun NoteEditScreen(
     var passcode by remember { mutableStateOf(existingNote?.passcodeHash ?: "1234") }
 
     var showSecurityDialog by remember { mutableStateOf(false) }
+    var showActionMenu by remember { mutableStateOf(false) }
+    var showTemplateDialog by remember { mutableStateOf(false) }
 
     val currentTags = remember(tagsString) {
         if (tagsString.isBlank()) emptyList()
@@ -197,16 +199,80 @@ fun NoteEditScreen(
                 }
             }
 
-            // Floating Toolbar
-            FloatingFormattingToolbar(
-                onAction = { syntax -> content = insertFormatting(content, syntax) },
+            // Floating Toolbars
+            Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding()
                     .padding(horizontal = 16.dp)
-                    .padding(bottom = 16.dp)
-            )
+                    .padding(bottom = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Action Menu
+                AnimatedVisibility(
+                    visible = showActionMenu,
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+                ) {
+                    ActionPopUpMenu(
+                        onInsertTemplate = { showTemplateDialog = true },
+                        onDeletePermanently = {
+                            if (noteId != 0L) {
+                                viewModel.deleteNote(noteId)
+                                onBack()
+                            } else {
+                                onBack()
+                            }
+                        },
+                        onOpenCommandPalette = { /* Handle Palette */ },
+                        onDismiss = { showActionMenu = false }
+                    )
+                }
+
+                // Formatting Toolbar
+                FloatingFormattingToolbar(
+                    onAction = { syntax -> content = insertFormatting(content, syntax) }
+                )
+
+                // Breadcrumb Pill Toolbar
+                BreadcrumbPillToolbar(
+                    onLogoClick = { showActionMenu = !showActionMenu }
+                ) {
+                    IconButton(onClick = { /* Undo placeholder */ }) {
+                        Icon(Icons.Default.Undo, contentDescription = "Undo", tint = Color(0xFFB0B0B0))
+                    }
+                    IconButton(onClick = { /* Redo placeholder */ }) {
+                        Icon(Icons.Default.Redo, contentDescription = "Redo", tint = Color(0xFFB0B0B0))
+                    }
+                    IconButton(
+                        onClick = {
+                            viewModel.saveNote(
+                                id = noteId,
+                                title = title,
+                                content = content,
+                                tags = tagsString,
+                                isPinned = isPinned,
+                                isEncrypted = isEncrypted,
+                                passcode = passcode
+                            )
+                            onBack()
+                        }
+                    ) {
+                        Icon(Icons.Default.Check, contentDescription = "Done", tint = MaterialTheme.colorScheme.primary)
+                    }
+                }
+            }
         }
+    }
+
+    if (showTemplateDialog) {
+        TemplateSelectionDialog(
+            onDismiss = { showTemplateDialog = false },
+            onTemplateSelected = { template ->
+                content = if (content.isBlank()) template.content else "$content\n\n${template.content}"
+            }
+        )
     }
 
     if (showSecurityDialog) {

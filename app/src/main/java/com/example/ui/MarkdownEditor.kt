@@ -1,5 +1,6 @@
 package com.example.ui
 
+import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -42,6 +43,8 @@ fun MarkdownEditor(
 
     var viewMode by remember { mutableStateOf(EditorViewMode.SPLIT) }
     var showSecurityDialog by remember { mutableStateOf(false) }
+    var showActionMenu by remember { mutableStateOf(false) }
+    var showTemplateDialog by remember { mutableStateOf(false) }
 
     val currentTags = remember(tagsString) {
         if (tagsString.isBlank()) emptyList()
@@ -208,18 +211,82 @@ fun MarkdownEditor(
                 Spacer(modifier = Modifier.height(80.dp))
             }
 
-            // Floating Toolbar
-            if (viewMode != EditorViewMode.PREVIEW) {
-                FloatingFormattingToolbar(
-                    onAction = { syntax -> content = insertFormatting(content, syntax) },
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .navigationBarsPadding()
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 16.dp)
-                )
+            // Floating Toolbars
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                // Action Menu
+                AnimatedVisibility(
+                    visible = showActionMenu,
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+                ) {
+                    ActionPopUpMenu(
+                        onInsertTemplate = { showTemplateDialog = true },
+                        onDeletePermanently = {
+                            if (noteId != 0L) {
+                                viewModel.deleteNote(noteId)
+                                onBack()
+                            } else {
+                                onBack()
+                            }
+                        },
+                        onOpenCommandPalette = { /* Handle Palette */ },
+                        onDismiss = { showActionMenu = false }
+                    )
+                }
+
+                // Formatting Toolbar
+                if (viewMode != EditorViewMode.PREVIEW) {
+                    FloatingFormattingToolbar(
+                        onAction = { syntax -> content = insertFormatting(content, syntax) }
+                    )
+                }
+
+                // Breadcrumb Pill Toolbar
+                BreadcrumbPillToolbar(
+                    onLogoClick = { showActionMenu = !showActionMenu }
+                ) {
+                    IconButton(onClick = { /* Undo */ }) {
+                        Icon(Icons.Default.Undo, contentDescription = "Undo", tint = Color(0xFFB0B0B0))
+                    }
+                    IconButton(onClick = { /* Redo */ }) {
+                        Icon(Icons.Default.Redo, contentDescription = "Redo", tint = Color(0xFFB0B0B0))
+                    }
+                    IconButton(
+                        onClick = {
+                            viewModel.saveNote(
+                                id = noteId,
+                                title = title,
+                                content = content,
+                                tags = tagsString,
+                                isPinned = isPinned,
+                                isEncrypted = isEncrypted,
+                                passcode = passcode
+                            )
+                            onBack()
+                        }
+                    ) {
+                        Icon(Icons.Default.Check, contentDescription = "Done", tint = MaterialTheme.colorScheme.primary)
+                    }
+                }
             }
         }
+    }
+
+    if (showTemplateDialog) {
+        TemplateSelectionDialog(
+            onDismiss = { showTemplateDialog = false },
+            onTemplateSelected = { template ->
+                content = if (content.isBlank()) template.content else "$content\n\n${template.content}"
+            }
+        )
     }
 
     if (showSecurityDialog) {
