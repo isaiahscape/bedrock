@@ -140,7 +140,8 @@ fun NoteViewScreen(
                         .navigationBarsPadding()
                         .padding(horizontal = 16.dp)
                         .padding(bottom = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     // Action Menu (Slide-up)
                     AnimatedVisibility(
@@ -159,8 +160,6 @@ fun NoteViewScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
-
                     // Pill Toolbar
                     BreadcrumbPillToolbar(
                         onLogoClick = { showActionMenu = !showActionMenu }
@@ -173,7 +172,7 @@ fun NoteViewScreen(
                                 modifier = Modifier.size(24.dp)
                             )
                         }
-                        IconButton(onClick = { /* Forward - placeholder */ }) {
+                        IconButton(onClick = { /* Forward */ }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                                 contentDescription = "Forward",
@@ -181,7 +180,7 @@ fun NoteViewScreen(
                                 modifier = Modifier.size(24.dp)
                             )
                         }
-                        IconButton(onClick = { /* Search - placeholder */ }) {
+                        IconButton(onClick = { /* Search */ }) {
                             Icon(
                                 imageVector = Icons.Filled.Search,
                                 contentDescription = "Search",
@@ -197,7 +196,7 @@ fun NoteViewScreen(
                                 modifier = Modifier.size(24.dp)
                             )
                         }
-                        IconButton(onClick = { /* Tabs - placeholder */ }) {
+                        IconButton(onClick = { /* Tabs */ }) {
                             Box(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier

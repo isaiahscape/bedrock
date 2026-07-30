@@ -132,7 +132,8 @@ class NoteViewModel(
         tags: String,
         isPinned: Boolean,
         isEncrypted: Boolean,
-        passcode: String? = null
+        passcode: String? = null,
+        type: String = "note"
     ) {
         viewModelScope.launch {
             val noteToSave = Note(
@@ -142,7 +143,8 @@ class NoteViewModel(
                 tags = tags,
                 isPinned = isPinned,
                 isEncrypted = isEncrypted,
-                passcodeHash = if (isEncrypted) passcode?.ifBlank { masterPin.value ?: "1234" } else null
+                passcodeHash = if (isEncrypted) passcode?.ifBlank { masterPin.value ?: "1234" } else null,
+                type = type
             )
             val savedId = repository.saveNote(noteToSave)
             if (isEncrypted) {

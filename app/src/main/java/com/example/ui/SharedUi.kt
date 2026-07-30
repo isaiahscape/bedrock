@@ -19,6 +19,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 
+enum class EditorViewMode {
+    EDIT, PREVIEW, SPLIT
+}
+
 @Composable
 fun SecurityDialog(
     isEncrypted: Boolean,

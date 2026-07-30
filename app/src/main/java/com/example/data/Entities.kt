@@ -16,7 +16,8 @@ data class Note(
     val tags: String = "", // Comma-separated list of tags e.g. "Work,Docs,Todo"
     val syncStatus: String = "SYNCED", // SYNCED, PENDING_SYNC, LOCAL_ONLY
     val deviceOrigin: String = "This Device",
-    val isArchived: Boolean = false
+    val isArchived: Boolean = false,
+    val type: String = "note" // note, markdown, todo
 ) {
     fun getTagList(): List<String> {
         if (tags.isBlank()) return emptyList()

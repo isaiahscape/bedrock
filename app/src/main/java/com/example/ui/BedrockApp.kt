@@ -124,7 +124,8 @@ fun BedrockApp(viewModel: NoteViewModel) {
                     onBack = { navController.popBackStack() },
                     onOpenCommandPalette = { showCommandPalette = true },
                     onEditNote = { id ->
-                        navController.navigate("note_edit/$id?type=note")
+                        val note = notes.find { it.id == id }
+                        navController.navigate("note_edit/$id?type=${note?.type ?: "note"}")
                     }
                 )
             }
@@ -144,6 +145,8 @@ fun BedrockApp(viewModel: NoteViewModel) {
                     viewModel = viewModel,
                     allNotes = notes,
                     availableTags = tags,
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    animatedVisibilityScope = this@composable,
                     onBack = { navController.popBackStack() }
                 )
             }

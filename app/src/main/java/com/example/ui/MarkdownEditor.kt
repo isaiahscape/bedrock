@@ -9,6 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -25,13 +27,15 @@ import com.example.util.MarkdownContent
 import com.example.util.MarkdownHelper
 import com.example.viewmodel.NoteViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun MarkdownEditor(
     noteId: Long,
     viewModel: NoteViewModel,
     existingNote: Note?,
     availableTags: List<Tag>,
+    sharedTransitionScope: SharedTransitionScope,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onBack: () -> Unit
 ) {
     var title by remember { mutableStateOf(existingNote?.title ?: "") }
@@ -51,25 +55,26 @@ fun MarkdownEditor(
         else tagsString.split(",").map { it.trim() }.filter { it.isNotEmpty() }
     }
 
+    fun saveAndBack() {
+        viewModel.saveNote(
+            id = noteId,
+            title = title,
+            content = content,
+            tags = tagsString,
+            isPinned = isPinned,
+            isEncrypted = isEncrypted,
+            passcode = passcode,
+            type = "markdown"
+        )
+        onBack()
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { },
                 navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            viewModel.saveNote(
-                                id = noteId,
-                                title = title,
-                                content = content,
-                                tags = tagsString,
-                                isPinned = isPinned,
-                                isEncrypted = isEncrypted,
-                                passcode = passcode
-                            )
-                            onBack()
-                        }
-                    ) {
+                    IconButton(onClick = { saveAndBack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -110,85 +115,72 @@ fun MarkdownEditor(
             )
         }
     ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            Column(
+        with(sharedTransitionScope) {
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
-                    .verticalScroll(rememberScrollState())
+                    .sharedElement(
+                        rememberSharedContentState(key = "note_card_$noteId"),
+                        animatedVisibilityScope = animatedVisibilityScope
+                    )
             ) {
-                TextField(
-                    value = title,
-                    onValueChange = { title = it },
-                    placeholder = { Text("Title", fontSize = 22.sp) },
-                    singleLine = true,
-                    textStyle = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 22.sp
-                    ),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                )
-
-                if (currentTags.isNotEmpty()) {
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
-                    ) {
-                        items(currentTags) { tag ->
-                            Surface(
-                                shape = RoundedCornerShape(16.dp),
-                                color = MaterialTheme.colorScheme.surfaceVariant
-                            ) {
-                                Text(
-                                    text = tag,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                        }
-                    }
-                }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .verticalScroll(rememberScrollState())
                 ) {
-                    when (viewMode) {
-                        EditorViewMode.EDIT -> {
-                            TextField(
-                                value = content,
-                                onValueChange = { content = it },
-                                placeholder = { Text("Note") },
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = Color.Transparent,
-                                    unfocusedContainerColor = Color.Transparent,
-                                    focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent
-                                ),
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-                        EditorViewMode.PREVIEW -> {
-                            Box(modifier = Modifier.padding(horizontal = 12.dp)) {
-                                MarkdownContent(content = content) { lineIndex ->
-                                    content = MarkdownHelper.toggleTodoAtLine(content, lineIndex)
+                    TextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        placeholder = { Text("Title", fontSize = 22.sp) },
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 22.sp
+                        ),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    )
+
+                    if (currentTags.isNotEmpty()) {
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+                        ) {
+                            items(currentTags) { tag ->
+                                Surface(
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = MaterialTheme.colorScheme.surfaceVariant
+                                ) {
+                                    Text(
+                                        text = tag,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
                                 }
                             }
                         }
-                        EditorViewMode.SPLIT -> {
-                            Column {
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        when (viewMode) {
+                            EditorViewMode.EDIT -> {
                                 TextField(
                                     value = content,
                                     onValueChange = { content = it },
+                                    placeholder = { Text("Note") },
                                     colors = TextFieldDefaults.colors(
                                         focusedContainerColor = Color.Transparent,
                                         unfocusedContainerColor = Color.Transparent,
@@ -197,83 +189,89 @@ fun MarkdownEditor(
                                     ),
                                     modifier = Modifier.fillMaxWidth()
                                 )
-                                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                            }
+                            EditorViewMode.PREVIEW -> {
                                 Box(modifier = Modifier.padding(horizontal = 12.dp)) {
                                     MarkdownContent(content = content) { lineIndex ->
                                         content = MarkdownHelper.toggleTodoAtLine(content, lineIndex)
                                     }
                                 }
                             }
-                        }
-                    }
-                }
-                
-                Spacer(modifier = Modifier.height(80.dp))
-            }
-
-            // Floating Toolbars
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .navigationBarsPadding()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                // Action Menu
-                AnimatedVisibility(
-                    visible = showActionMenu,
-                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
-                ) {
-                    ActionPopUpMenu(
-                        onInsertTemplate = { showTemplateDialog = true },
-                        onDeletePermanently = {
-                            if (noteId != 0L) {
-                                viewModel.deleteNote(noteId)
-                                onBack()
-                            } else {
-                                onBack()
+                            EditorViewMode.SPLIT -> {
+                                Column {
+                                    TextField(
+                                        value = content,
+                                        onValueChange = { content = it },
+                                        colors = TextFieldDefaults.colors(
+                                            focusedContainerColor = Color.Transparent,
+                                            unfocusedContainerColor = Color.Transparent,
+                                            focusedIndicatorColor = Color.Transparent,
+                                            unfocusedIndicatorColor = Color.Transparent
+                                        ),
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                                    Box(modifier = Modifier.padding(horizontal = 12.dp)) {
+                                        MarkdownContent(content = content) { lineIndex ->
+                                            content = MarkdownHelper.toggleTodoAtLine(content, lineIndex)
+                                        }
+                                    }
+                                }
                             }
-                        },
-                        onOpenCommandPalette = { /* Handle Palette */ },
-                        onDismiss = { showActionMenu = false }
-                    )
-                }
-
-                // Formatting Toolbar
-                if (viewMode != EditorViewMode.PREVIEW) {
-                    FloatingFormattingToolbar(
-                        onAction = { syntax -> content = insertFormatting(content, syntax) }
-                    )
-                }
-
-                // Breadcrumb Pill Toolbar
-                BreadcrumbPillToolbar(
-                    onLogoClick = { showActionMenu = !showActionMenu }
-                ) {
-                    IconButton(onClick = { /* Undo */ }) {
-                        Icon(Icons.Default.Undo, contentDescription = "Undo", tint = Color(0xFFB0B0B0))
-                    }
-                    IconButton(onClick = { /* Redo */ }) {
-                        Icon(Icons.Default.Redo, contentDescription = "Redo", tint = Color(0xFFB0B0B0))
-                    }
-                    IconButton(
-                        onClick = {
-                            viewModel.saveNote(
-                                id = noteId,
-                                title = title,
-                                content = content,
-                                tags = tagsString,
-                                isPinned = isPinned,
-                                isEncrypted = isEncrypted,
-                                passcode = passcode
-                            )
-                            onBack()
                         }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(100.dp))
+                }
+
+                // Floating Toolbars
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .navigationBarsPadding()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    AnimatedVisibility(
+                        visible = showActionMenu,
+                        enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                        exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
                     ) {
-                        Icon(Icons.Default.Check, contentDescription = "Done", tint = MaterialTheme.colorScheme.primary)
+                        ActionPopUpMenu(
+                            onInsertTemplate = { showTemplateDialog = true },
+                            onDeletePermanently = {
+                                if (noteId != 0L) {
+                                    viewModel.deleteNote(noteId)
+                                    onBack()
+                                } else {
+                                    onBack()
+                                }
+                            },
+                            onOpenCommandPalette = { /* Palette */ },
+                            onDismiss = { showActionMenu = false }
+                        )
+                    }
+
+                    if (viewMode != EditorViewMode.PREVIEW) {
+                        FloatingFormattingToolbar(
+                            onAction = { syntax -> content = insertFormatting(content, syntax) }
+                        )
+                    }
+
+                    BreadcrumbPillToolbar(
+                        onLogoClick = { showActionMenu = !showActionMenu }
+                    ) {
+                        IconButton(onClick = { /* Undo */ }) {
+                            Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo", tint = Color(0xFFB0B0B0))
+                        }
+                        IconButton(onClick = { /* Redo */ }) {
+                            Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo", tint = Color(0xFFB0B0B0))
+                        }
+                        IconButton(onClick = { saveAndBack() }) {
+                            Icon(Icons.Default.Check, contentDescription = "Done", tint = MaterialTheme.colorScheme.primary)
+                        }
                     }
                 }
             }

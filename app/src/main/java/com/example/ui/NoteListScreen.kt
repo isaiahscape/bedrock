@@ -343,6 +343,7 @@ fun NoteListScreen(
                                     pinInput = ""
                                     pinError = false
                                 } else {
+                                    // Navigate to view/edit with type
                                     onNavigateToEditNote(note.id)
                                 }
                             }

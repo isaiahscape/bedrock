@@ -9,7 +9,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-@Database(entities = [Note::class, Tag::class, SyncLog::class], version = 1, exportSchema = false)
+@Database(entities = [Note::class, Tag::class, SyncLog::class], version = 2, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun noteDao(): NoteDao
 
@@ -24,6 +24,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "bedrock_db"
                 )
+                .fallbackToDestructiveMigration()
                 .addCallback(AppDatabaseCallback())
                 .build()
                 INSTANCE = instance
@@ -91,7 +92,8 @@ fun syncNotesOffline(): Boolean {
                     isPinned = true,
                     tags = "Documentation,Todo",
                     syncStatus = "SYNCED",
-                    deviceOrigin = "Primary Device"
+                    deviceOrigin = "Primary Device",
+                    type = "markdown"
                 )
 
                 // Note 2: Project Roadmap & Tasks
@@ -122,7 +124,8 @@ Track project milestones and feature implementations directly with embedded to-d
                     isPinned = true,
                     tags = "Project,Todo",
                     syncStatus = "SYNCED",
-                    deviceOrigin = "MacBook Air"
+                    deviceOrigin = "MacBook Air",
+                    type = "markdown"
                 )
 
                 // Note 3: Encrypted Sample Note
@@ -150,7 +153,8 @@ This note is stored with **Encrypted Local Storage**.
                     passcodeHash = "1234", // Simple default PIN for demonstration
                     tags = "Personal",
                     syncStatus = "LOCAL_ONLY",
-                    deviceOrigin = "Encrypted Vault"
+                    deviceOrigin = "Encrypted Vault",
+                    type = "note"
                 )
 
                 noteDao.insertNote(welcomeNote)
