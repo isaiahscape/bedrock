@@ -39,6 +39,7 @@ fun NoteViewScreen(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     onBack: () -> Unit,
+    onOpenCommandPalette: () -> Unit,
     onEditNote: (Long) -> Unit
 ) {
     val note = remember(noteId, allNotes) {
@@ -157,6 +158,7 @@ fun NoteViewScreen(
                             viewModel.deleteNote(noteId)
                             onBack()
                         },
+                        onOpenCommandPalette = onOpenCommandPalette,
                         onDismiss = { showActionMenu = false }
                     )
                 }
@@ -247,6 +249,7 @@ fun NoteViewScreen(
 @Composable
 fun ActionPopUpMenu(
     onDeletePermanently: () -> Unit,
+    onOpenCommandPalette: () -> Unit,
     onDismiss: () -> Unit
 ) {
     Surface(
@@ -266,7 +269,10 @@ fun ActionPopUpMenu(
             ActionMenuItem(
                 icon = Icons.Default.Terminal,
                 label = "Open command palette",
-                onClick = onDismiss
+                onClick = {
+                    onOpenCommandPalette()
+                    onDismiss()
+                }
             )
             ActionMenuItem(
                 icon = Icons.Default.DeleteOutline,

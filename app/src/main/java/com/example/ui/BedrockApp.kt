@@ -1,8 +1,15 @@
 package com.example.ui
 
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Note
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -35,6 +42,39 @@ fun BedrockApp(viewModel: NoteViewModel) {
     var showSyncCenterDialog by remember { mutableStateOf(false) }
     var showProfileDialog by remember { mutableStateOf(false) }
     var showRecycleBinDialog by remember { mutableStateOf(false) }
+    var showCommandPalette by remember { mutableStateOf(false) }
+
+    val commands = remember(viewModel, navController) {
+        listOf(
+            Command("new_text", "New Text Note", Icons.AutoMirrored.Filled.Note) {
+                navController.navigate("note_edit/0?type=note")
+            },
+            Command("new_markdown", "New Markdown Note", Icons.Default.Code) {
+                navController.navigate("note_edit/0?type=markdown")
+            },
+            Command("new_todo", "New To-do List", Icons.Default.Checklist) {
+                navController.navigate("note_edit/0?type=todo")
+            },
+            Command("sync", "Sync Notes", Icons.Default.Sync) {
+                viewModel.triggerSync()
+            },
+            Command("settings", "Open Settings", Icons.Default.Settings) {
+                navController.navigate("settings")
+            },
+            Command("theme", "Switch Theme", Icons.Default.Brightness4) {
+                val nextMode = when(themeMode) {
+                    "light" -> "dark"
+                    "dark" -> "auto"
+                    else -> "light"
+                }
+                viewModel.setThemeMode(nextMode)
+            },
+            Command("search", "Search Notes", Icons.Default.Search) {
+                navController.popBackStack("note_list", inclusive = false)
+                // We could add a side effect to focus search, but for now just navigating back
+            }
+        )
+    }
 
     SharedTransitionLayout {
         NavHost(
@@ -82,6 +122,7 @@ fun BedrockApp(viewModel: NoteViewModel) {
                     sharedTransitionScope = this@SharedTransitionLayout,
                     animatedVisibilityScope = this@composable,
                     onBack = { navController.popBackStack() },
+                    onOpenCommandPalette = { showCommandPalette = true },
                     onEditNote = { id ->
                         navController.navigate("note_edit/$id?type=note")
                     }
@@ -155,6 +196,13 @@ fun BedrockApp(viewModel: NoteViewModel) {
                     androidx.compose.material3.Text("OK")
                 }
             }
+        )
+    }
+
+    if (showCommandPalette) {
+        CommandPalette(
+            onDismiss = { showCommandPalette = false },
+            commands = commands
         )
     }
 }
