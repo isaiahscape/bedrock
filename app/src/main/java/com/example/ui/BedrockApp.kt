@@ -131,7 +131,7 @@ fun BedrockApp(viewModel: NoteViewModel) {
             }
 
             composable(
-                route = "note_edit/{noteId}?type={noteType}",
+                route = "note_edit/{noteId}?type={type}",
                 arguments = listOf(
                     navArgument("noteId") { type = NavType.LongType },
                     navArgument("type") { type = NavType.StringType; defaultValue = "note" }

@@ -361,9 +361,9 @@ fun TodoItemRow(
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent
             ),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
             keyboardActions = KeyboardActions(
-                onNext = { onEnterPressed() }
+                onDone = { onEnterPressed() }
             ),
             singleLine = true
         )
