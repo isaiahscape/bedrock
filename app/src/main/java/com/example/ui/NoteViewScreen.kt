@@ -147,17 +147,21 @@ fun NoteViewScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Action Menu (Slide-up)
-                    AnimatedVisibility(
-                        visible = showActionMenu,
-                        enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-                        exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
-                    ) {
-                        ActionPopUpMenu(
-                            onAction = { showActionMenu = false }
-                        )
-                    }
+                AnimatedVisibility(
+                    visible = showActionMenu,
+                    enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                    exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+                ) {
+                    ActionPopUpMenu(
+                        onDeletePermanently = {
+                            viewModel.deleteNote(noteId)
+                            onBack()
+                        },
+                        onDismiss = { showActionMenu = false }
+                    )
+                }
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                     // Pill Toolbar
                     Surface(
@@ -241,7 +245,10 @@ fun NoteViewScreen(
 }
 
 @Composable
-fun ActionPopUpMenu(onAction: () -> Unit) {
+fun ActionPopUpMenu(
+    onDeletePermanently: () -> Unit,
+    onDismiss: () -> Unit
+) {
     Surface(
         shape = RoundedCornerShape(24.dp),
         color = Color(0xFF1E1E1E),
@@ -254,27 +261,30 @@ fun ActionPopUpMenu(onAction: () -> Unit) {
             ActionMenuItem(
                 icon = Icons.Default.PostAdd,
                 label = "Insert template",
-                onClick = onAction
+                onClick = onDismiss
             )
             ActionMenuItem(
                 icon = Icons.Default.Terminal,
                 label = "Open command palette",
-                onClick = onAction
+                onClick = onDismiss
             )
             ActionMenuItem(
                 icon = Icons.Default.DeleteOutline,
                 label = "Move to trash",
-                onClick = onAction
+                onClick = onDismiss
             )
             ActionMenuItem(
                 icon = Icons.Default.DeleteForever,
                 label = "Delete permanently",
-                onClick = onAction
+                onClick = {
+                    onDeletePermanently()
+                    onDismiss()
+                }
             )
             ActionMenuItem(
                 icon = Icons.Default.SwapHoriz,
                 label = "Open quick switcher",
-                onClick = onAction
+                onClick = onDismiss
             )
         }
     }
