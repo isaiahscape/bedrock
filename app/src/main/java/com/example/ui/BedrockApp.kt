@@ -1,6 +1,5 @@
 package com.example.ui
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -15,14 +14,7 @@ import com.example.viewmodel.NoteViewModel
 import com.example.viewmodel.NoteViewModelFactory
 
 @Composable
-fun BedrockApp() {
-    val context = LocalContext.current
-    val database = remember { AppDatabase.getDatabase(context) }
-    val repository = remember { NoteRepository(database.noteDao()) }
-    val viewModel: NoteViewModel = androidx.lifecycle.viewmodel.compose.viewModel(
-        factory = NoteViewModelFactory(repository)
-    )
-
+fun BedrockApp(viewModel: NoteViewModel) {
     val navController = rememberNavController()
 
     val notes by viewModel.notes.collectAsStateWithLifecycle()
@@ -33,14 +25,13 @@ fun BedrockApp() {
     val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
     val syncMessage by viewModel.syncMessage.collectAsStateWithLifecycle()
     val masterPin by viewModel.masterPin.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
 
     val tags by viewModel.allTags.collectAsStateWithLifecycle(initialValue = emptyList())
     val syncLogs by viewModel.syncLogs.collectAsStateWithLifecycle(initialValue = emptyList())
 
     var showSyncCenterDialog by remember { mutableStateOf(false) }
-    var showSecuritySettingsDialog by remember { mutableStateOf(false) }
     var showProfileDialog by remember { mutableStateOf(false) }
-    var showSettingsDialog by remember { mutableStateOf(false) }
     var showRecycleBinDialog by remember { mutableStateOf(false) }
 
     NavHost(
@@ -67,9 +58,9 @@ fun BedrockApp() {
                     navController.navigate("note_edit/0?type=$type")
                 },
                 onOpenSyncCenter = { showSyncCenterDialog = true },
-                onOpenSecuritySettings = { showSecuritySettingsDialog = true },
+                onOpenSecuritySettings = { navController.navigate("settings") },
                 onOpenProfile = { showProfileDialog = true },
-                onOpenSettings = { showSettingsDialog = true },
+                onOpenSettings = { navController.navigate("settings") },
                 onOpenRecycleBin = { showRecycleBinDialog = true }
             )
         }
@@ -108,6 +99,15 @@ fun BedrockApp() {
                 onBack = { navController.popBackStack() }
             )
         }
+
+        composable("settings") {
+            SettingsScreen(
+                viewModel = viewModel,
+                themeMode = themeMode,
+                masterPin = masterPin ?: "1234",
+                onBack = { navController.popBackStack() }
+            )
+        }
     }
 
     if (showSyncCenterDialog) {
@@ -124,14 +124,6 @@ fun BedrockApp() {
         )
     }
 
-    if (showSecuritySettingsDialog) {
-        SecuritySettingsDialog(
-            viewModel = viewModel,
-            masterPin = masterPin,
-            onDismiss = { showSecuritySettingsDialog = false }
-        )
-    }
-
     if (showProfileDialog) {
         androidx.compose.material3.AlertDialog(
             onDismissRequest = { showProfileDialog = false },
@@ -139,19 +131,6 @@ fun BedrockApp() {
             text = { androidx.compose.material3.Text("Profile page coming soon.") },
             confirmButton = {
                 androidx.compose.material3.TextButton(onClick = { showProfileDialog = false }) {
-                    androidx.compose.material3.Text("OK")
-                }
-            }
-        )
-    }
-
-    if (showSettingsDialog) {
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { showSettingsDialog = false },
-            title = { androidx.compose.material3.Text("Settings") },
-            text = { androidx.compose.material3.Text("App settings coming soon.") },
-            confirmButton = {
-                androidx.compose.material3.TextButton(onClick = { showSettingsDialog = false }) {
                     androidx.compose.material3.Text("OK")
                 }
             }

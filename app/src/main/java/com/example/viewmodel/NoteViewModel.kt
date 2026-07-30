@@ -9,10 +9,14 @@ import com.example.data.NoteRepository
 import com.example.data.SyncLog
 import com.example.data.Tag
 import com.example.util.EncryptionUtil
+import com.example.util.PreferenceManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-class NoteViewModel(private val repository: NoteRepository) : ViewModel() {
+class NoteViewModel(
+    private val repository: NoteRepository,
+    private val preferenceManager: PreferenceManager
+) : ViewModel() {
 
     // Search and Tag filters
     private val _searchQuery = MutableStateFlow("")
@@ -25,9 +29,18 @@ class NoteViewModel(private val repository: NoteRepository) : ViewModel() {
     private val _unlockedNoteIds = MutableStateFlow<Set<Long>>(emptySet())
     val unlockedNoteIds: StateFlow<Set<Long>> = _unlockedNoteIds.asStateFlow()
 
-    // Master PIN
-    private val _masterPin = MutableStateFlow<String?>("1234") // Default master pin
-    val masterPin: StateFlow<String?> = _masterPin.asStateFlow()
+    // Theme and Master PIN from DataStore
+    val themeMode: StateFlow<String> = preferenceManager.themeMode.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "auto"
+    )
+
+    val masterPin: StateFlow<String?> = preferenceManager.masterPin.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = "1234"
+    )
 
     // Sync state
     val isOfflineMode: StateFlow<Boolean> = repository.isOfflineMode
@@ -76,7 +89,7 @@ class NoteViewModel(private val repository: NoteRepository) : ViewModel() {
     }
 
     fun unlockNote(noteId: Long, pinInput: String, note: Note): Boolean {
-        val targetPasscode = note.passcodeHash ?: _masterPin.value ?: ""
+        val targetPasscode = note.passcodeHash ?: masterPin.value ?: ""
         val isValid = EncryptionUtil.verifyPasscode(pinInput, targetPasscode)
         if (isValid) {
             _unlockedNoteIds.update { it + noteId }
@@ -88,8 +101,16 @@ class NoteViewModel(private val repository: NoteRepository) : ViewModel() {
         _unlockedNoteIds.update { it - noteId }
     }
 
+    fun setThemeMode(mode: String) {
+        viewModelScope.launch {
+            preferenceManager.setThemeMode(mode)
+        }
+    }
+
     fun setMasterPin(pin: String) {
-        _masterPin.value = pin
+        viewModelScope.launch {
+            preferenceManager.setMasterPin(pin)
+        }
     }
 
     fun togglePin(note: Note) {
@@ -121,7 +142,7 @@ class NoteViewModel(private val repository: NoteRepository) : ViewModel() {
                 tags = tags,
                 isPinned = isPinned,
                 isEncrypted = isEncrypted,
-                passcodeHash = if (isEncrypted) passcode?.ifBlank { "1234" } else null
+                passcodeHash = if (isEncrypted) passcode?.ifBlank { masterPin.value ?: "1234" } else null
             )
             val savedId = repository.saveNote(noteToSave)
             if (isEncrypted) {
@@ -180,11 +201,14 @@ class NoteViewModel(private val repository: NoteRepository) : ViewModel() {
     }
 }
 
-class NoteViewModelFactory(private val repository: NoteRepository) : ViewModelProvider.Factory {
+class NoteViewModelFactory(
+    private val repository: NoteRepository,
+    private val preferenceManager: PreferenceManager
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(NoteViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return NoteViewModel(repository) as T
+            return NoteViewModel(repository, preferenceManager) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

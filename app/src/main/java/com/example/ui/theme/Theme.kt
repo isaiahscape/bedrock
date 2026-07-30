@@ -50,10 +50,16 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun BedrockTheme(
+    themeMode: String = "auto",
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val useDarkTheme = when (themeMode) {
+        "light" -> false
+        "dark" -> true
+        else -> darkTheme
+    }
+    val colorScheme = if (useDarkTheme) DarkColorScheme else LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,
