@@ -49,10 +49,20 @@ fun MarkdownEditor(
     var showSecurityDialog by remember { mutableStateOf(false) }
     var showActionMenu by remember { mutableStateOf(false) }
     var showTemplateDialog by remember { mutableStateOf(false) }
+    var showTagDialog by remember { mutableStateOf(false) }
 
     val currentTags = remember(tagsString) {
         if (tagsString.isBlank()) emptyList()
         else tagsString.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+    }
+
+    fun toggleTag(tagName: String) {
+        val tags = if (currentTags.contains(tagName)) {
+            currentTags.filter { it != tagName }
+        } else {
+            currentTags + tagName
+        }
+        tagsString = tags.joinToString(",")
     }
 
     fun saveAndBack() {
@@ -157,11 +167,12 @@ fun MarkdownEditor(
                         ) {
                             items(currentTags) { tag ->
                                 Surface(
+                                    onClick = { toggleTag(tag) },
                                     shape = RoundedCornerShape(16.dp),
                                     color = MaterialTheme.colorScheme.surfaceVariant
                                 ) {
                                     Text(
-                                        text = tag,
+                                        text = "#$tag",
                                         style = MaterialTheme.typography.labelSmall,
                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                     )
@@ -220,7 +231,16 @@ fun MarkdownEditor(
                             }
                         }
                     }
-                    
+
+                    TextButton(
+                        onClick = { showTagDialog = true },
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Add Tags", style = MaterialTheme.typography.labelMedium)
+                    }
+
                     Spacer(modifier = Modifier.height(100.dp))
                 }
 
@@ -276,6 +296,16 @@ fun MarkdownEditor(
                 }
             }
         }
+    }
+
+    if (showTagDialog) {
+        TagSelectionDialog(
+            availableTags = availableTags,
+            selectedTags = currentTags,
+            onTagToggled = { toggleTag(it) },
+            onAddGlobalTag = { viewModel.addTag(it) },
+            onDismiss = { showTagDialog = false }
+        )
     }
 
     if (showTemplateDialog) {

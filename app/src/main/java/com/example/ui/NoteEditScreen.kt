@@ -18,7 +18,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -78,10 +77,20 @@ fun NoteEditScreen(
     var showSecurityDialog by remember { mutableStateOf(false) }
     var showActionMenu by remember { mutableStateOf(false) }
     var showTemplateDialog by remember { mutableStateOf(false) }
+    var showTagDialog by remember { mutableStateOf(false) }
 
     val currentTags = remember(tagsString) {
         if (tagsString.isBlank()) emptyList()
         else tagsString.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+    }
+
+    fun toggleTag(tagName: String) {
+        val tags = if (currentTags.contains(tagName)) {
+            currentTags.filter { it != tagName }
+        } else {
+            currentTags + tagName
+        }
+        tagsString = tags.joinToString(",")
     }
 
     fun saveAndBack() {
@@ -164,15 +173,16 @@ fun NoteEditScreen(
                     if (currentTags.isNotEmpty()) {
                         LazyRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                         ) {
                             items(currentTags) { tag ->
                                 Surface(
+                                    onClick = { toggleTag(tag) },
                                     shape = RoundedCornerShape(16.dp),
                                     color = MaterialTheme.colorScheme.surfaceVariant
                                 ) {
                                     Text(
-                                        text = tag,
+                                        text = "#$tag",
                                         style = MaterialTheme.typography.labelSmall,
                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                                     )
@@ -197,7 +207,16 @@ fun NoteEditScreen(
                             .padding(horizontal = 16.dp)
                     )
                     
-                    Spacer(modifier = Modifier.height(100.dp))
+                    TextButton(
+                        onClick = { showTagDialog = true },
+                        modifier = Modifier.padding(horizontal = 12.dp)
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("Add Tags", style = MaterialTheme.typography.labelMedium)
+                    }
+
+                    Spacer(modifier = Modifier.height(120.dp))
                 }
 
                 // Floating Toolbars
@@ -250,6 +269,16 @@ fun NoteEditScreen(
                 }
             }
         }
+    }
+
+    if (showTagDialog) {
+        TagSelectionDialog(
+            availableTags = availableTags,
+            selectedTags = currentTags,
+            onTagToggled = { toggleTag(it) },
+            onAddGlobalTag = { viewModel.addTag(it) },
+            onDismiss = { showTagDialog = false }
+        )
     }
 
     if (showTemplateDialog) {

@@ -1,14 +1,10 @@
 package com.example.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -79,6 +75,21 @@ fun TodoEditor(
     var showActionMenu by remember { mutableStateOf(false) }
     var showSecurityDialog by remember { mutableStateOf(false) }
     var showTemplateDialog by remember { mutableStateOf(false) }
+    var showTagDialog by remember { mutableStateOf(false) }
+
+    val currentTags = remember(tagsString) {
+        if (tagsString.isBlank()) emptyList()
+        else tagsString.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+    }
+
+    fun toggleTag(tagName: String) {
+        val tags = if (currentTags.contains(tagName)) {
+            currentTags.filter { it != tagName }
+        } else {
+            currentTags + tagName
+        }
+        tagsString = tags.joinToString(",")
+    }
 
     fun serializeItems(): String {
         return items.joinToString("\n") { item ->
@@ -159,6 +170,27 @@ fun TodoEditor(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
                     )
 
+                    if (currentTags.isNotEmpty()) {
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+                        ) {
+                            items(currentTags) { tag ->
+                                Surface(
+                                    onClick = { toggleTag(tag) },
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = MaterialTheme.colorScheme.surfaceVariant
+                                ) {
+                                    Text(
+                                        text = "#$tag",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(8.dp))
 
                     // List
@@ -185,13 +217,24 @@ fun TodoEditor(
                         }
 
                         item {
-                            TextButton(
-                                onClick = { items.add(TodoItemState(text = "", isChecked = false)) },
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                            ) {
-                                Icon(Icons.Default.Add, contentDescription = null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Add item")
+                            Column {
+                                TextButton(
+                                    onClick = { items.add(TodoItemState(text = "", isChecked = false)) },
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Add item")
+                                }
+                                
+                                TextButton(
+                                    onClick = { showTagDialog = true },
+                                    modifier = Modifier.padding(horizontal = 16.dp)
+                                ) {
+                                    Icon(Icons.Default.Label, contentDescription = null, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text("Add Tags", style = MaterialTheme.typography.labelMedium)
+                                }
                             }
                         }
                     }
@@ -243,6 +286,16 @@ fun TodoEditor(
                 }
             }
         }
+    }
+
+    if (showTagDialog) {
+        TagSelectionDialog(
+            availableTags = availableTags,
+            selectedTags = currentTags,
+            onTagToggled = { toggleTag(it) },
+            onAddGlobalTag = { viewModel.addTag(it) },
+            onDismiss = { showTagDialog = false }
+        )
     }
 
     if (showTemplateDialog) {
