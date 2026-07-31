@@ -162,12 +162,12 @@ fun MarkdownContent(
             val trimmed = line.trim()
 
             // Image Parsing: ![alt](uri){w=300}
-            val imageRegex = """!\[(.*?)\]\((.*?)\)(\{w=(\d+)\})?""".toRegex()
+            val imageRegex = """!\[(.*?)]\((.*?)\)(?:\{w=(\d+)\})?""".toRegex()
             val match = imageRegex.matchEntire(trimmed)
             if (match != null) {
                 val alt = match.groupValues[1]
                 val uri = match.groupValues[2]
-                val widthStr = match.groupValues.getOrNull(4)
+                val widthStr = match.groupValues.getOrNull(3)
                 val width = widthStr?.toFloatOrNull() ?: 300f
                 
                 DisableSelection {

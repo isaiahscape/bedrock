@@ -31,8 +31,8 @@ fun WorkspaceTabs(
         containerColor = MaterialTheme.colorScheme.background,
         divider = {},
         indicator = { tabPositions ->
-            if (openNotes.isNotEmpty()) {
-                val index = openNotes.indexOfFirst { it.id == activeNoteId }.coerceAtLeast(0)
+            val index = openNotes.indexOfFirst { it.id == activeNoteId }
+            if (index != -1 && index < tabPositions.size) {
                 TabRowDefaults.SecondaryIndicator(
                     Modifier.tabIndicatorOffset(tabPositions[index]),
                     color = MaterialTheme.colorScheme.primary

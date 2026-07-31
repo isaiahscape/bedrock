@@ -70,15 +70,6 @@ fun MarkdownEditor(
 
     val androidContext = LocalContext.current
 
-    val imageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let {
-            val imageMarkdown = "\n![Image]($it){w=300}\n"
-            content += imageMarkdown
-        }
-    }
-
     val currentTags = remember(tagsString) {
         if (tagsString.isBlank()) emptyList()
         else tagsString.split(",").map { it.trim() }.filter { it.isNotEmpty() }
@@ -129,6 +120,15 @@ fun MarkdownEditor(
             syntax?.let { 
                 content = insertFormatting(content, it)
             }
+        }
+    }
+
+    val imageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val imageMarkdown = "\n![Image]($it){w=300}\n"
+            content += imageMarkdown
         }
     }
 

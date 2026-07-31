@@ -19,6 +19,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.data.AppDatabase
+import com.example.data.Note
 import com.example.data.NoteRepository
 import com.example.viewmodel.NoteViewModel
 import com.example.viewmodel.NoteViewModelFactory
@@ -38,7 +39,13 @@ fun BedrockApp(viewModel: NoteViewModel) {
     val tabModes by viewModel.tabModes.collectAsStateWithLifecycle()
     
     val openNotes = remember(notes, openTabIds) {
-        notes.filter { it.id in openTabIds }
+        openTabIds.mapNotNull { id ->
+            if (id == 0L) {
+                Note(id = 0, title = "New Note", content = "", type = "note")
+            } else {
+                notes.find { it.id == id }
+            }
+        }
     }
 
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
@@ -129,7 +136,7 @@ fun BedrockApp(viewModel: NoteViewModel) {
                         navigateToTabContent(id)
                     },
                     onCreateNote = { type ->
-                        // New notes always open in EDIT mode
+                        viewModel.openNoteInTab(0L, TabMode.EDIT)
                         navController.navigate("note_edit/0?type=$type")
                     },
                     onOpenSettings = { navController.navigate("settings") },
@@ -170,7 +177,7 @@ fun BedrockApp(viewModel: NoteViewModel) {
                         animatedVisibilityScope = this@composable,
                     onNavigateToEditNote = { noteId ->
                         if (noteId == 0L) {
-                            // New note starts in EDIT mode
+                            viewModel.openNoteInTab(0L, TabMode.EDIT)
                             navController.navigate("note_edit/0?type=note")
                         } else {
                             viewModel.openNoteInTab(noteId)

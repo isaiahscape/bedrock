@@ -65,7 +65,8 @@ fun NoteEditScreen(
             sharedTransitionScope = sharedTransitionScope,
             animatedVisibilityScope = animatedVisibilityScope,
             onBack = onBack,
-            onOpenCommandPalette = onOpenCommandPalette
+            onOpenCommandPalette = onOpenCommandPalette,
+            onTabClick = onTabClick
         )
         return
     }
@@ -80,7 +81,8 @@ fun NoteEditScreen(
             sharedTransitionScope = sharedTransitionScope,
             animatedVisibilityScope = animatedVisibilityScope,
             onBack = onBack,
-            onOpenCommandPalette = onOpenCommandPalette
+            onOpenCommandPalette = onOpenCommandPalette,
+            onTabClick = onTabClick
         )
         return
     }

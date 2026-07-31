@@ -289,6 +289,19 @@ class NoteViewModel(
             )
             val savedId = repository.saveNote(noteToSave)
             
+            if (id == 0L) {
+                _openTabs.update { tabs ->
+                    tabs.map { if (it == 0L) savedId else it }
+                }
+                _tabModes.update { modes ->
+                    val newModes = modes.toMutableMap()
+                    newModes.remove(0L)
+                    newModes[savedId] = TabMode.VIEW
+                    newModes
+                }
+                _activeTabId.value = savedId
+            }
+
             if (context != null) {
                 if (reminderTime != null) {
                     scheduleAlarm(context, savedId, title.ifBlank { "Untitled Note" }, reminderTime)
