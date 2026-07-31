@@ -108,6 +108,8 @@ class NoteRepository(private val noteDao: NoteDao) {
         noteDao.clearSyncLogs()
     }
 
+    suspend fun getRecentCrashLogs() = noteDao.getRecentCrashLogs()
+
     // Export Notes as JSON Backup String
     suspend fun exportNotesJson(notesList: List<Note>): String {
         val jsonArray = JSONArray()

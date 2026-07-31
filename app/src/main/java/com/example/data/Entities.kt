@@ -57,3 +57,12 @@ data class SyncLog(
     val action: String,
     val status: String // SUCCESS, OFFLINE_QUEUED, ERROR
 )
+
+@Entity(tableName = "crash_logs")
+data class CrashLog(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val timestamp: Long = System.currentTimeMillis(),
+    val exceptionName: String,
+    val message: String,
+    val stackTrace: String
+)

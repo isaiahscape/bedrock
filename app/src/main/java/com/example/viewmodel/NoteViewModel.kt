@@ -195,6 +195,20 @@ class NoteViewModel(
                 logs.append("[${log.timestamp}] ${log.action} - ${log.status}\n")
             }
 
+            logs.append("\nCrash History:\n")
+            val crashLogs = repository.getRecentCrashLogs()
+            if (crashLogs.isEmpty()) {
+                logs.append("No crashes recorded.\n")
+            } else {
+                crashLogs.forEach { crash ->
+                    logs.append("--- Crash at ${crash.timestamp} ---\n")
+                    logs.append("Type: ${crash.exceptionName}\n")
+                    logs.append("Message: ${crash.message}\n")
+                    logs.append("StackTrace:\n${crash.stackTrace}\n")
+                    logs.append("----------------------------\n")
+                }
+            }
+
             val fileName = "bedrock_logs_${System.currentTimeMillis()}.txt"
             val path = FileHelper.saveStringToDownloadFolder(context, fileName, logs.toString())
             onComplete(path ?: "Error saving logs")

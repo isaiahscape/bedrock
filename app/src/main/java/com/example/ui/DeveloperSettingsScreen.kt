@@ -73,6 +73,13 @@ fun DeveloperSettingsScreen(
                         Toast.makeText(context, "Sync logs cleared", Toast.LENGTH_SHORT).show()
                     }
                 )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                ExpressiveSettingsItem(
+                    title = "Simulate Crash",
+                    subtitle = "Force a RuntimeException",
+                    icon = Icons.Default.BugReport,
+                    onClick = { throw RuntimeException("Bedrock Simulated Crash") }
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))

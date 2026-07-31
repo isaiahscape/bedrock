@@ -55,4 +55,11 @@ interface NoteDao {
 
     @Query("DELETE FROM sync_logs")
     suspend fun clearSyncLogs()
+
+    // Crash Log operations
+    @Query("SELECT * FROM crash_logs ORDER BY timestamp DESC LIMIT 5")
+    suspend fun getRecentCrashLogs(): List<CrashLog>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertCrashLog(log: CrashLog)
 }
