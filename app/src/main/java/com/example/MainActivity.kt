@@ -33,6 +33,7 @@ class MainActivity : ComponentActivity() {
             viewModel = androidx.lifecycle.viewmodel.compose.viewModel(
                 factory = NoteViewModelFactory(repository, preferenceManager)
             )
+            viewModel.cleanupTrash()
 
             val themeMode by viewModel.themeMode.collectAsState()
 

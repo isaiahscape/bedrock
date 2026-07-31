@@ -142,7 +142,7 @@ fun ProfileHubContent(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
             ExpressiveSettingsItem(
-                title = "Recycle Bin",
+                title = "Trash",
                 subtitle = "Restore or delete notes",
                 icon = Icons.Default.Delete,
                 onClick = onOpenRecycleBin

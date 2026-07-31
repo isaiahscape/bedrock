@@ -9,13 +9,13 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface NoteDao {
-    @Query("SELECT * FROM notes WHERE isArchived = 0 ORDER BY isPinned DESC, updatedAt DESC")
+    @Query("SELECT * FROM notes WHERE isArchived = 0 AND isInTrash = 0 ORDER BY isPinned DESC, updatedAt DESC")
     fun getAllNotes(): Flow<List<Note>>
 
     @Query("SELECT * FROM notes WHERE id = :id")
     suspend fun getNoteById(id: Long): Note?
 
-    @Query("SELECT * FROM notes WHERE isArchived = 0 AND (title LIKE '%' || :query || '%' OR content LIKE '%' || :query || '%' OR tags LIKE '%' || :query || '%') ORDER BY isPinned DESC, updatedAt DESC")
+    @Query("SELECT * FROM notes WHERE isArchived = 0 AND isInTrash = 0 AND (title LIKE '%' || :query || '%' OR content LIKE '%' || :query || '%' OR tags LIKE '%' || :query || '%') ORDER BY isPinned DESC, updatedAt DESC")
     fun searchNotes(query: String): Flow<List<Note>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -35,6 +35,19 @@ interface NoteDao {
 
     @Query("UPDATE notes SET syncStatus = :status WHERE id = :id")
     suspend fun updateSyncStatus(id: Long, status: String)
+
+    // Trash operations
+    @Query("SELECT * FROM notes WHERE isInTrash = 1 ORDER BY trashedAt DESC")
+    fun getTrashNotes(): Flow<List<Note>>
+
+    @Query("UPDATE notes SET isInTrash = :isInTrash, trashedAt = :trashedAt WHERE id = :id")
+    suspend fun updateTrashStatus(id: Long, isInTrash: Boolean, trashedAt: Long?)
+
+    @Query("DELETE FROM notes WHERE isInTrash = 1")
+    suspend fun emptyTrash()
+
+    @Query("DELETE FROM notes WHERE isInTrash = 1 AND trashedAt < :threshold")
+    suspend fun deleteExpiredTrashNotes(threshold: Long)
 
     // Tag operations
     @Query("SELECT * FROM tags ORDER BY name ASC")

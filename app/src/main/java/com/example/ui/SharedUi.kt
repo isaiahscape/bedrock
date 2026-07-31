@@ -145,6 +145,7 @@ fun SecurityDialog(
 @Composable
 fun ActionPopUpMenu(
     onInsertTemplate: () -> Unit,
+    onMoveToTrash: () -> Unit,
     onDeletePermanently: () -> Unit,
     onOpenCommandPalette: () -> Unit,
     onDismiss: () -> Unit
@@ -177,7 +178,10 @@ fun ActionPopUpMenu(
             ActionMenuItem(
                 icon = Icons.Default.DeleteOutline,
                 label = "Move to trash",
-                onClick = onDismiss
+                onClick = {
+                    onMoveToTrash()
+                    onDismiss()
+                }
             )
             ActionMenuItem(
                 icon = Icons.Default.DeleteForever,

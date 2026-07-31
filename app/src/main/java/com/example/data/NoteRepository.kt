@@ -21,6 +21,7 @@ class NoteRepository(private val noteDao: NoteDao) {
     val allNotes: Flow<List<Note>> = noteDao.getAllNotes()
     val allTags: Flow<List<Tag>> = noteDao.getAllTags()
     val syncLogs: Flow<List<SyncLog>> = noteDao.getSyncLogs()
+    val trashNotes: Flow<List<Note>> = noteDao.getTrashNotes()
 
     suspend fun getNoteById(id: Long): Note? = noteDao.getNoteById(id)
 
@@ -61,6 +62,25 @@ class NoteRepository(private val noteDao: NoteDao) {
 
     suspend fun updateReminderTime(id: Long, reminderTime: Long?) {
         noteDao.updateReminderTime(id, reminderTime)
+    }
+
+    suspend fun moveToTrash(id: Long) {
+        noteDao.updateTrashStatus(id, true, System.currentTimeMillis())
+        noteDao.insertSyncLog(SyncLog(action = "Moved note ID #$id to Trash", status = "SUCCESS"))
+    }
+
+    suspend fun restoreFromTrash(id: Long) {
+        noteDao.updateTrashStatus(id, false, null)
+        noteDao.insertSyncLog(SyncLog(action = "Restored note ID #$id from Trash", status = "SUCCESS"))
+    }
+
+    suspend fun emptyTrash() {
+        noteDao.emptyTrash()
+        noteDao.insertSyncLog(SyncLog(action = "Emptied Trash Bin", status = "SUCCESS"))
+    }
+
+    suspend fun cleanupTrash(threshold: Long) {
+        noteDao.deleteExpiredTrashNotes(threshold)
     }
 
     suspend fun toggleTodoInNote(note: Note, lineIndex: Int) {

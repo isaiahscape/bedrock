@@ -371,6 +371,14 @@ fun TodoEditor(
                     ) {
                         ActionPopUpMenu(
                             onInsertTemplate = { showTemplateDialog = true },
+                            onMoveToTrash = {
+                                if (noteId != 0L) {
+                                    viewModel.moveToTrash(noteId)
+                                    onBack()
+                                } else {
+                                    onBack()
+                                }
+                            },
                             onDeletePermanently = {
                                 if (noteId != 0L) {
                                     viewModel.deleteNote(noteId)

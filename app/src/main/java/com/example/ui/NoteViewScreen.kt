@@ -245,6 +245,10 @@ fun NoteViewScreen(
                     ) {
                         ActionPopUpMenu(
                             onInsertTemplate = { showTemplateDialog = true },
+                            onMoveToTrash = {
+                                viewModel.moveToTrash(noteId)
+                                onBack()
+                            },
                             onDeletePermanently = {
                                 viewModel.deleteNote(noteId)
                                 onBack()

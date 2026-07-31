@@ -18,7 +18,9 @@ data class Note(
     val deviceOrigin: String = "This Device",
     val isArchived: Boolean = false,
     val type: String = "note", // note, markdown, todo
-    val reminderTime: Long? = null // epoch timestamp
+    val reminderTime: Long? = null, // epoch timestamp
+    val isInTrash: Boolean = false,
+    val trashedAt: Long? = null
 ) {
     fun getTagList(): List<String> {
         if (tags.isBlank()) return emptyList()

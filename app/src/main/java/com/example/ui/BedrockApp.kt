@@ -63,7 +63,6 @@ fun BedrockApp(viewModel: NoteViewModel) {
     val syncLogs by viewModel.syncLogs.collectAsStateWithLifecycle(initialValue = emptyList())
 
     var showSyncCenterDialog by remember { mutableStateOf(false) }
-    var showRecycleBinDialog by remember { mutableStateOf(false) }
     var showCommandPalette by remember { mutableStateOf(false) }
 
     fun navigateToTabContent(noteId: Long) {
@@ -189,7 +188,7 @@ fun BedrockApp(viewModel: NoteViewModel) {
                         },
                         onOpenSyncCenter = { showSyncCenterDialog = true },
                         onOpenSettings = { navController.navigate("settings") },
-                        onOpenRecycleBin = { showRecycleBinDialog = true }
+                        onOpenRecycleBin = { navController.navigate("trash") }
                     )
                 }
 
@@ -222,8 +221,7 @@ fun BedrockApp(viewModel: NoteViewModel) {
                     )
                 }
 
-                composable(
-                    route = "note_edit/{noteId}?type={type}",
+                composable("note_edit/{noteId}?type={type}",
                     arguments = listOf(
                         navArgument("noteId") { type = NavType.LongType },
                         navArgument("type") { type = NavType.StringType; defaultValue = "note" }
@@ -246,6 +244,13 @@ fun BedrockApp(viewModel: NoteViewModel) {
                             viewModel.switchTab(id)
                             navigateToTabContent(id)
                         }
+                    )
+                }
+
+                composable("trash") {
+                    TrashScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() }
                     )
                 }
 
@@ -312,19 +317,6 @@ fun BedrockApp(viewModel: NoteViewModel) {
             onDismiss = {
                 showSyncCenterDialog = false
                 viewModel.clearSyncMessage()
-            }
-        )
-    }
-
-    if (showRecycleBinDialog) {
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { showRecycleBinDialog = false },
-            title = { androidx.compose.material3.Text("Recycle Bin") },
-            text = { androidx.compose.material3.Text("Deleted notes will appear here.") },
-            confirmButton = {
-                androidx.compose.material3.TextButton(onClick = { showRecycleBinDialog = false }) {
-                    androidx.compose.material3.Text("OK")
-                }
             }
         )
     }

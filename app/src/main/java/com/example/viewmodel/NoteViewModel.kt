@@ -80,6 +80,11 @@ class NoteViewModel(
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
 
     val allTags: Flow<List<Tag>> = repository.allTags
+    val trashNotes: StateFlow<List<Note>> = repository.trashNotes.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
 
     // Workspace / Tab Management
     private val _openTabs = MutableStateFlow<List<Long>>(emptyList())
@@ -357,6 +362,33 @@ class NoteViewModel(
     fun deleteNote(id: Long) {
         viewModelScope.launch {
             repository.deleteNote(id)
+        }
+    }
+
+    fun moveToTrash(id: Long) {
+        viewModelScope.launch {
+            repository.moveToTrash(id)
+            closeTab(id)
+        }
+    }
+
+    fun restoreFromTrash(id: Long) {
+        viewModelScope.launch {
+            repository.restoreFromTrash(id)
+        }
+    }
+
+    fun emptyTrash() {
+        viewModelScope.launch {
+            repository.emptyTrash()
+        }
+    }
+
+    fun cleanupTrash() {
+        viewModelScope.launch {
+            val thirtyDaysMillis = 30L * 24 * 60 * 60 * 1000
+            val threshold = System.currentTimeMillis() - thirtyDaysMillis
+            repository.cleanupTrash(threshold)
         }
     }
 
