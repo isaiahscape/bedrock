@@ -11,6 +11,7 @@ import com.example.data.AppDatabase
 import com.example.data.NoteRepository
 import com.example.ui.BedrockApp
 import com.example.ui.theme.BedrockTheme
+import com.example.util.NotificationHelper
 import com.example.util.PreferenceManager
 import com.example.viewmodel.NoteViewModel
 import com.example.viewmodel.NoteViewModelFactory
@@ -18,6 +19,7 @@ import com.example.viewmodel.NoteViewModelFactory
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        NotificationHelper.createNotificationChannel(this)
         enableEdgeToEdge()
         setContent {
             val context = this

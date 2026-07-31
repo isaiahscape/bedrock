@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import com.example.data.Note
 import com.example.util.MarkdownContent
 import com.example.viewmodel.NoteViewModel
@@ -220,6 +221,8 @@ fun NoteViewScreen(
         }
     }
 
+    val context = LocalContext.current
+
     if (showTemplateDialog && note != null) {
         TemplateSelectionDialog(
             onDismiss = { showTemplateDialog = false },
@@ -236,7 +239,10 @@ fun NoteViewScreen(
                     tags = note.tags,
                     isPinned = note.isPinned,
                     isEncrypted = note.isEncrypted,
-                    passcode = note.passcodeHash
+                    passcode = note.passcodeHash,
+                    type = note.type,
+                    reminderTime = note.reminderTime,
+                    context = context
                 )
             }
         )

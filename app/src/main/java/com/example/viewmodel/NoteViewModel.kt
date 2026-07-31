@@ -1,6 +1,9 @@
 package com.example.viewmodel
 
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -8,6 +11,7 @@ import com.example.data.Note
 import com.example.data.NoteRepository
 import com.example.data.SyncLog
 import com.example.data.Tag
+import com.example.receiver.ReminderReceiver
 import com.example.util.EncryptionUtil
 import com.example.util.PreferenceManager
 import kotlinx.coroutines.flow.*
@@ -157,7 +161,9 @@ class NoteViewModel(
         isPinned: Boolean,
         isEncrypted: Boolean,
         passcode: String? = null,
-        type: String = "note"
+        type: String = "note",
+        reminderTime: Long? = null,
+        context: Context? = null
     ) {
         viewModelScope.launch {
             val noteToSave = Note(
@@ -168,14 +174,61 @@ class NoteViewModel(
                 isPinned = isPinned,
                 isEncrypted = isEncrypted,
                 passcodeHash = if (isEncrypted) passcode?.ifBlank { masterPin.value ?: "1234" } else null,
-                type = type
+                type = type,
+                reminderTime = reminderTime
             )
             val savedId = repository.saveNote(noteToSave)
+            
+            if (context != null) {
+                if (reminderTime != null) {
+                    scheduleAlarm(context, savedId, title.ifBlank { "Untitled Note" }, reminderTime)
+                } else if (id != 0L) {
+                    cancelAlarm(context, id)
+                }
+            }
+
             if (isEncrypted) {
                 // Auto-unlock for immediate viewing
                 _unlockedNoteIds.update { it + savedId }
             }
         }
+    }
+
+    private fun scheduleAlarm(context: Context, noteId: Long, noteTitle: String, timeMillis: Long) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, ReminderReceiver::class.java).apply {
+            putExtra("note_id", noteId)
+            putExtra("note_title", noteTitle)
+        }
+        
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            noteId.toInt(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            if (alarmManager.canScheduleExactAlarms()) {
+                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMillis, pendingIntent)
+            } else {
+                alarmManager.set(AlarmManager.RTC_WAKEUP, timeMillis, pendingIntent)
+            }
+        } else {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, timeMillis, pendingIntent)
+        }
+    }
+
+    private fun cancelAlarm(context: Context, noteId: Long) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent = Intent(context, ReminderReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            noteId.toInt(),
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        alarmManager.cancel(pendingIntent)
     }
 
     fun deleteNote(id: Long) {

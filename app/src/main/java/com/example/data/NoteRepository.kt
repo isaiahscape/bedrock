@@ -59,6 +59,10 @@ class NoteRepository(private val noteDao: NoteDao) {
         noteDao.setPinned(id, !currentIsPinned)
     }
 
+    suspend fun updateReminderTime(id: Long, reminderTime: Long?) {
+        noteDao.updateReminderTime(id, reminderTime)
+    }
+
     suspend fun toggleTodoInNote(note: Note, lineIndex: Int) {
         val updatedContent = MarkdownHelper.toggleTodoAtLine(note.content, lineIndex)
         val syncStatus = if (_isOfflineMode.value) "PENDING_SYNC" else "SYNCED"

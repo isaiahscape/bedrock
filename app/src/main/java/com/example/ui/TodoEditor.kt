@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -33,7 +34,8 @@ import androidx.compose.ui.unit.sp
 import com.example.data.Note
 import com.example.data.Tag
 import com.example.viewmodel.NoteViewModel
-import java.util.UUID
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -73,16 +75,20 @@ fun TodoEditor(
     var isPinned by remember { mutableStateOf(existingNote?.isPinned ?: false) }
     var isEncrypted by remember { mutableStateOf(existingNote?.isEncrypted ?: false) }
     var passcode by remember { mutableStateOf(existingNote?.passcodeHash ?: "1234") }
+    var reminderTime by remember { mutableStateOf(existingNote?.reminderTime) }
 
     var showActionMenu by remember { mutableStateOf(false) }
     var showSecurityDialog by remember { mutableStateOf(false) }
     var showTemplateDialog by remember { mutableStateOf(false) }
     var showTagDialog by remember { mutableStateOf(false) }
+    var showReminderPicker by remember { mutableStateOf(false) }
 
     val currentTags = remember(tagsString) {
         if (tagsString.isBlank()) emptyList()
         else tagsString.split(",").map { it.trim() }.filter { it.isNotEmpty() }
     }
+
+    val context = LocalContext.current
 
     fun toggleTag(tagName: String) {
         val tags = if (currentTags.contains(tagName)) {
@@ -109,7 +115,9 @@ fun TodoEditor(
             isPinned = isPinned,
             isEncrypted = isEncrypted,
             passcode = passcode,
-            type = "todo"
+            type = "todo",
+            reminderTime = reminderTime,
+            context = context
         )
         onBack()
     }
@@ -135,6 +143,13 @@ fun TodoEditor(
                             imageVector = if (isEncrypted) Icons.Default.Lock else Icons.Outlined.Lock,
                             contentDescription = "Security",
                             tint = if (isEncrypted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    IconButton(onClick = { showReminderPicker = true }) {
+                        Icon(
+                            imageVector = if (reminderTime != null) Icons.Default.NotificationsActive else Icons.Default.NotificationsNone,
+                            contentDescription = "Set Reminder",
+                            tint = if (reminderTime != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     }
                 },
@@ -195,6 +210,18 @@ fun TodoEditor(
                                 }
                             }
                         }
+                    }
+
+                    reminderTime?.let { time ->
+                        val sdf = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
+                        InputChip(
+                            selected = true,
+                            onClick = { reminderTime = null },
+                            label = { Text("Reminder: ${sdf.format(Date(time))}") },
+                            trailingIcon = { Icon(Icons.Default.Close, contentDescription = "Remove", modifier = Modifier.size(16.dp)) },
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                            colors = InputChipDefaults.inputChipColors(selectedContainerColor = MaterialTheme.colorScheme.primaryContainer)
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
@@ -321,6 +348,16 @@ fun TodoEditor(
             passcode = passcode,
             onPasscodeChange = { passcode = it },
             onDismiss = { showSecurityDialog = false }
+        )
+    }
+
+    if (showReminderPicker) {
+        ReminderPickerDialog(
+            onDismiss = { showReminderPicker = false },
+            onTimeSelected = { time ->
+                reminderTime = time
+                showReminderPicker = false
+            }
         )
     }
 }

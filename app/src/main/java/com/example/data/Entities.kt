@@ -17,7 +17,8 @@ data class Note(
     val syncStatus: String = "SYNCED", // SYNCED, PENDING_SYNC, LOCAL_ONLY
     val deviceOrigin: String = "This Device",
     val isArchived: Boolean = false,
-    val type: String = "note" // note, markdown, todo
+    val type: String = "note", // note, markdown, todo
+    val reminderTime: Long? = null // epoch timestamp
 ) {
     fun getTagList(): List<String> {
         if (tags.isBlank()) return emptyList()

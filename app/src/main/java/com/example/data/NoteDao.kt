@@ -30,6 +30,9 @@ interface NoteDao {
     @Query("UPDATE notes SET isPinned = :isPinned, updatedAt = :updatedAt WHERE id = :id")
     suspend fun setPinned(id: Long, isPinned: Boolean, updatedAt: Long = System.currentTimeMillis())
 
+    @Query("UPDATE notes SET reminderTime = :reminderTime WHERE id = :id")
+    suspend fun updateReminderTime(id: Long, reminderTime: Long?)
+
     @Query("UPDATE notes SET syncStatus = :status WHERE id = :id")
     suspend fun updateSyncStatus(id: Long, status: String)
 

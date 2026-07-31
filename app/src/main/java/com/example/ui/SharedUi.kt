@@ -8,7 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
+import java.util.Calendar
 
 @Composable
 fun SettingsCategoryItem(
@@ -73,6 +74,60 @@ fun SettingsCategoryItem(
                 modifier = Modifier.size(20.dp)
             )
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ReminderPickerDialog(
+    onDismiss: () -> Unit,
+    onTimeSelected: (Long) -> Unit
+) {
+    val dateState = rememberDatePickerState(
+        initialSelectedDateMillis = System.currentTimeMillis()
+    )
+    val timeState = rememberTimePickerState(
+        initialHour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY),
+        initialMinute = Calendar.getInstance().get(Calendar.MINUTE)
+    )
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    if (!showTimePicker) {
+        DatePickerDialog(
+            onDismissRequest = onDismiss,
+            confirmButton = {
+                TextButton(onClick = { showTimePicker = true }) { Text("Next") }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) { Text("Cancel") }
+            }
+        ) {
+            DatePicker(state = dateState)
+        }
+    } else {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val calendar = Calendar.getInstance().apply {
+                            timeInMillis = dateState.selectedDateMillis ?: System.currentTimeMillis()
+                            set(Calendar.HOUR_OF_DAY, timeState.hour)
+                            set(Calendar.MINUTE, timeState.minute)
+                            set(Calendar.SECOND, 0)
+                        }
+                        onTimeSelected(calendar.timeInMillis)
+                    }
+                ) { Text("Set") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) { Text("Back") }
+            },
+            title = { Text("Select Time") },
+            text = {
+                TimePicker(state = timeState)
+            }
+        )
     }
 }
 

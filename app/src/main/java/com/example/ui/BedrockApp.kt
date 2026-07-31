@@ -159,6 +159,14 @@ fun BedrockApp(viewModel: NoteViewModel) {
                     themeMode = themeMode,
                     onNavigateToAppearance = { navController.navigate("settings_appearance") },
                     onNavigateToSecurity = { navController.navigate("settings_security") },
+                    onNavigateToNotifications = { navController.navigate("settings_notifications") },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable("settings_notifications") {
+                NotificationSettingsScreen(
+                    viewModel = viewModel,
                     onBack = { navController.popBackStack() }
                 )
             }

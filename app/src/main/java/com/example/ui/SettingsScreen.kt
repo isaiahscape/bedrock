@@ -8,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.*
@@ -31,6 +32,7 @@ fun SettingsScreen(
     themeMode: String,
     onNavigateToAppearance: () -> Unit,
     onNavigateToSecurity: () -> Unit,
+    onNavigateToNotifications: () -> Unit,
     onBack: () -> Unit
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -79,6 +81,13 @@ fun SettingsScreen(
                 subtitle = "Master PIN & Encryption",
                 icon = Icons.Default.Security,
                 onClick = onNavigateToSecurity
+            )
+
+            SettingsCategoryItem(
+                title = "Reminders & Reliability",
+                subtitle = "Battery optimization & Notifications",
+                icon = Icons.Default.NotificationsActive,
+                onClick = onNavigateToNotifications
             )
 
             Spacer(modifier = Modifier.height(32.dp))
