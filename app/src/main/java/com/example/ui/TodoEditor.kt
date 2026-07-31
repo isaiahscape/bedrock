@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.example.data.Note
 import com.example.data.Tag
 import com.example.viewmodel.NoteViewModel
+import com.example.viewmodel.TabMode
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -52,7 +53,8 @@ fun TodoEditor(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: androidx.compose.animation.AnimatedVisibilityScope,
     onBack: () -> Unit,
-    onOpenCommandPalette: () -> Unit
+    onOpenCommandPalette: () -> Unit,
+    onTabClick: (Long) -> Unit
 ) {
     var title by remember { mutableStateOf(existingNote?.title ?: "") }
     
@@ -136,6 +138,9 @@ fun TodoEditor(
             reminderTime = reminderTime,
             context = androidContext
         )
+        if (noteId != 0L) {
+            viewModel.updateTabMode(noteId, TabMode.VIEW)
+        }
         onBack()
     }
 
@@ -464,9 +469,7 @@ fun TodoEditor(
         TabListBottomSheet(
             openNotes = openNotes,
             activeNoteId = noteId,
-            onTabClick = { id ->
-                viewModel.switchTab(id)
-            },
+            onTabClick = onTabClick,
             onTabClose = { id -> viewModel.closeTab(id) },
             onDismiss = { showTabList = false }
         )

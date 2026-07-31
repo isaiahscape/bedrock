@@ -24,6 +24,7 @@ import com.example.data.Note
 import com.example.util.MarkdownContent
 import com.example.util.MarkdownHelper
 import com.example.viewmodel.NoteViewModel
+import com.example.viewmodel.TabMode
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -36,7 +37,8 @@ fun NoteViewScreen(
     animatedVisibilityScope: AnimatedVisibilityScope,
     onBack: () -> Unit,
     onOpenCommandPalette: () -> Unit,
-    onEditNote: (Long) -> Unit
+    onEditNote: (Long) -> Unit,
+    onTabClick: (Long) -> Unit
 ) {
     val androidContext = LocalContext.current
     
@@ -264,7 +266,10 @@ fun NoteViewScreen(
                                 modifier = Modifier.size(24.dp)
                             )
                         }
-                        IconButton(onClick = { onEditNote(noteId) }) {
+                        IconButton(onClick = { 
+                            viewModel.updateTabMode(noteId, TabMode.EDIT)
+                            onEditNote(noteId) 
+                        }) {
                             Icon(
                                 imageVector = Icons.Default.Edit,
                                 contentDescription = "Edit Note",
@@ -297,11 +302,7 @@ fun NoteViewScreen(
         TabListBottomSheet(
             openNotes = openNotes,
             activeNoteId = noteId,
-            onTabClick = { id ->
-                viewModel.switchTab(id)
-                onEditNote(id) // Or view? Actually view. 
-                // Wait, BedrockApp handles the navigation.
-            },
+            onTabClick = onTabClick,
             onTabClose = { id -> viewModel.closeTab(id) },
             onDismiss = { showTabList = false }
         )

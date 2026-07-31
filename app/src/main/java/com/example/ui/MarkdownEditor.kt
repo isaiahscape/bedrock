@@ -31,6 +31,7 @@ import com.example.data.Tag
 import com.example.util.MarkdownContent
 import com.example.util.MarkdownHelper
 import com.example.viewmodel.NoteViewModel
+import com.example.viewmodel.TabMode
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -46,7 +47,8 @@ fun MarkdownEditor(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     onBack: () -> Unit,
-    onOpenCommandPalette: () -> Unit
+    onOpenCommandPalette: () -> Unit,
+    onTabClick: (Long) -> Unit
 ) {
     var title by remember { mutableStateOf(existingNote?.title ?: "") }
     var content by remember { mutableStateOf(existingNote?.content ?: "# ") }
@@ -104,6 +106,9 @@ fun MarkdownEditor(
             reminderTime = reminderTime,
             context = androidContext
         )
+        if (noteId != 0L) {
+            viewModel.updateTabMode(noteId, TabMode.VIEW)
+        }
         onBack()
     }
 
@@ -497,11 +502,7 @@ fun MarkdownEditor(
         TabListBottomSheet(
             openNotes = openNotes,
             activeNoteId = noteId,
-            onTabClick = { id ->
-                viewModel.switchTab(id)
-                // Navigation is handled by BedrockApp LaunchedEffect or similar?
-                // Actually, we should trigger a navigation here if on mobile.
-            },
+            onTabClick = onTabClick,
             onTabClose = { id -> viewModel.closeTab(id) },
             onDismiss = { showTabList = false }
         )

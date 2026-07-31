@@ -18,6 +18,10 @@ import com.example.util.PreferenceManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
+enum class TabMode {
+    VIEW, EDIT
+}
+
 class NoteViewModel(
     private val repository: NoteRepository,
     private val preferenceManager: PreferenceManager
@@ -84,15 +88,20 @@ class NoteViewModel(
     private val _activeTabId = MutableStateFlow<Long?>(null)
     val activeTabId: StateFlow<Long?> = _activeTabId.asStateFlow()
 
-    fun openNoteInTab(id: Long) {
+    private val _tabModes = MutableStateFlow<Map<Long, TabMode>>(emptyMap())
+    val tabModes: StateFlow<Map<Long, TabMode>> = _tabModes.asStateFlow()
+
+    fun openNoteInTab(id: Long, mode: TabMode = TabMode.VIEW) {
         if (!_openTabs.value.contains(id)) {
             _openTabs.update { it + id }
         }
+        _tabModes.update { it + (id to mode) }
         _activeTabId.value = id
     }
 
     fun closeTab(id: Long) {
         _openTabs.update { it.filter { tabId -> tabId != id } }
+        _tabModes.update { it - id }
         if (_activeTabId.value == id) {
             _activeTabId.value = _openTabs.value.lastOrNull()
         }
@@ -102,6 +111,10 @@ class NoteViewModel(
         if (_openTabs.value.contains(id)) {
             _activeTabId.value = id
         }
+    }
+
+    fun updateTabMode(id: Long, mode: TabMode) {
+        _tabModes.update { it + (id to mode) }
     }
 
     // Filtered Notes Flow

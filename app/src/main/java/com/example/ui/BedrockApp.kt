@@ -22,6 +22,7 @@ import com.example.data.AppDatabase
 import com.example.data.NoteRepository
 import com.example.viewmodel.NoteViewModel
 import com.example.viewmodel.NoteViewModelFactory
+import com.example.viewmodel.TabMode
 import androidx.window.core.layout.WindowWidthSizeClass
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -34,6 +35,7 @@ fun BedrockApp(viewModel: NoteViewModel) {
     val notes by viewModel.notes.collectAsStateWithLifecycle()
     val openTabIds by viewModel.openTabs.collectAsStateWithLifecycle()
     val activeTabId by viewModel.activeTabId.collectAsStateWithLifecycle()
+    val tabModes by viewModel.tabModes.collectAsStateWithLifecycle()
     
     val openNotes = remember(notes, openTabIds) {
         notes.filter { it.id in openTabIds }
@@ -56,6 +58,16 @@ fun BedrockApp(viewModel: NoteViewModel) {
     var showSyncCenterDialog by remember { mutableStateOf(false) }
     var showRecycleBinDialog by remember { mutableStateOf(false) }
     var showCommandPalette by remember { mutableStateOf(false) }
+
+    fun navigateToTabContent(noteId: Long) {
+        val mode = tabModes[noteId] ?: TabMode.VIEW
+        if (mode == TabMode.EDIT) {
+            val note = notes.find { it.id == noteId }
+            navController.navigate("note_edit/$noteId?type=${note?.type ?: "note"}")
+        } else {
+            navController.navigate("note_view/$noteId")
+        }
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.keyboardEvent.collect { action ->
@@ -114,9 +126,10 @@ fun BedrockApp(viewModel: NoteViewModel) {
                     activeNoteId = activeTabId,
                     onNoteClick = { id ->
                         viewModel.openNoteInTab(id)
-                        navController.navigate("note_view/$id")
+                        navigateToTabContent(id)
                     },
                     onCreateNote = { type ->
+                        // New notes always open in EDIT mode
                         navController.navigate("note_edit/0?type=$type")
                     },
                     onOpenSettings = { navController.navigate("settings") },
@@ -130,7 +143,7 @@ fun BedrockApp(viewModel: NoteViewModel) {
                         activeNoteId = activeTabId,
                         onTabClick = { id ->
                             viewModel.switchTab(id)
-                            navController.navigate("note_view/$id")
+                            navigateToTabContent(id)
                         },
                         onTabClose = { id -> viewModel.closeTab(id) }
                     )
@@ -155,14 +168,15 @@ fun BedrockApp(viewModel: NoteViewModel) {
                         userImageUri = userImageUri,
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedVisibilityScope = this@composable,
-                        onNavigateToEditNote = { noteId ->
-                            if (noteId == 0L) {
-                                navController.navigate("note_edit/0?type=note")
-                            } else {
-                                viewModel.openNoteInTab(noteId)
-                                navController.navigate("note_view/$noteId")
-                            }
-                        },
+                    onNavigateToEditNote = { noteId ->
+                        if (noteId == 0L) {
+                            // New note starts in EDIT mode
+                            navController.navigate("note_edit/0?type=note")
+                        } else {
+                            viewModel.openNoteInTab(noteId)
+                            navigateToTabContent(noteId)
+                        }
+                    },
                         onCreateNote = { type ->
                             navController.navigate("note_edit/0?type=$type")
                         },
@@ -191,7 +205,12 @@ fun BedrockApp(viewModel: NoteViewModel) {
                         onOpenCommandPalette = { showCommandPalette = true },
                         onEditNote = { id ->
                             val note = notes.find { it.id == id }
+                            viewModel.updateTabMode(id, TabMode.EDIT)
                             navController.navigate("note_edit/$id?type=${note?.type ?: "note"}")
+                        },
+                        onTabClick = { id ->
+                            viewModel.switchTab(id)
+                            navigateToTabContent(id)
                         }
                     )
                 }
@@ -215,7 +234,11 @@ fun BedrockApp(viewModel: NoteViewModel) {
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedVisibilityScope = this@composable,
                         onBack = { navController.popBackStack() },
-                        onOpenCommandPalette = { showCommandPalette = true }
+                        onOpenCommandPalette = { showCommandPalette = true },
+                        onTabClick = { id ->
+                            viewModel.switchTab(id)
+                            navigateToTabContent(id)
+                        }
                     )
                 }
 

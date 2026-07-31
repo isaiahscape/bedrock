@@ -31,6 +31,7 @@ import com.example.data.Tag
 import com.example.util.MarkdownContent
 import com.example.util.MarkdownHelper
 import com.example.viewmodel.NoteViewModel
+import com.example.viewmodel.TabMode
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -47,7 +48,8 @@ fun NoteEditScreen(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     onBack: () -> Unit,
-    onOpenCommandPalette: () -> Unit
+    onOpenCommandPalette: () -> Unit,
+    onTabClick: (Long) -> Unit
 ) {
     val existingNote = remember(noteId, allNotes) {
         if (noteId != 0L) allNotes.find { it.id == noteId } else null
@@ -139,6 +141,9 @@ fun NoteEditScreen(
             reminderTime = reminderTime,
             context = androidContext
         )
+        if (noteId != 0L) {
+            viewModel.updateTabMode(noteId, TabMode.VIEW)
+        }
         onBack()
     }
 
@@ -490,9 +495,7 @@ fun NoteEditScreen(
         TabListBottomSheet(
             openNotes = openNotes,
             activeNoteId = noteId,
-            onTabClick = { id ->
-                viewModel.switchTab(id)
-            },
+            onTabClick = onTabClick,
             onTabClose = { id -> viewModel.closeTab(id) },
             onDismiss = { showTabList = false }
         )
