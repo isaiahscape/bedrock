@@ -15,11 +15,41 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import java.util.Calendar
+
+class SearchHighlightTransformation(private val query: String) : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        if (query.isBlank()) return TransformedText(text, OffsetMapping.Identity)
+
+        val highlightedString = buildAnnotatedString {
+            append(text.text)
+            var startIndex = 0
+            while (startIndex < text.length) {
+                val foundIndex = text.text.indexOf(query, startIndex, ignoreCase = true)
+                if (foundIndex == -1) break
+                
+                addStyle(
+                    style = SpanStyle(
+                        background = Color.Yellow.copy(alpha = 0.4f),
+                        color = Color.Black
+                    ),
+                    start = foundIndex,
+                    end = foundIndex + query.length
+                )
+                startIndex = foundIndex + query.length
+            }
+        }
+        return TransformedText(highlightedString, OffsetMapping.Identity)
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

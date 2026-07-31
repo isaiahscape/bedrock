@@ -56,9 +56,15 @@ object MarkdownHelper {
 
     /**
      * Parse inline formatting like **bold**, *italic*, and `code` into AnnotatedString.
+     * Also highlights any occurrences of [searchQuery].
      */
-    fun parseInlineMarkdown(text: String, primaryColor: Color, onSurfaceColor: Color): AnnotatedString {
-        return buildAnnotatedString {
+    fun parseInlineMarkdown(
+        text: String,
+        primaryColor: Color,
+        onSurfaceColor: Color,
+        searchQuery: String = ""
+    ): AnnotatedString {
+        val baseAnnotatedString = buildAnnotatedString {
             var i = 0
             val len = text.length
 
@@ -109,6 +115,29 @@ object MarkdownHelper {
                 i++
             }
         }
+
+        // Second pass: Highlight search query
+        if (searchQuery.isBlank()) return baseAnnotatedString
+
+        return buildAnnotatedString {
+            append(baseAnnotatedString)
+            val fullText = baseAnnotatedString.text
+            var startIndex = 0
+            while (startIndex < fullText.length) {
+                val foundIndex = fullText.indexOf(searchQuery, startIndex, ignoreCase = true)
+                if (foundIndex == -1) break
+                
+                addStyle(
+                    style = SpanStyle(
+                        background = Color.Yellow.copy(alpha = 0.4f),
+                        color = Color.Black
+                    ),
+                    start = foundIndex,
+                    end = foundIndex + searchQuery.length
+                )
+                startIndex = foundIndex + searchQuery.length
+            }
+        }
     }
 }
 
@@ -117,6 +146,7 @@ fun MarkdownContent(
     content: String,
     modifier: Modifier = Modifier,
     isEditable: Boolean = false,
+    searchQuery: String = "",
     onContentChange: ((String) -> Unit)? = null,
     onTodoToggle: ((lineIndex: Int) -> Unit)? = null
 ) {
@@ -186,7 +216,10 @@ fun MarkdownContent(
             if (trimmed.startsWith("```")) {
                 if (inCodeBlock) {
                     // Close code block
-                    CodeBlock(code = codeBlockLines.joinToString("\n"))
+                    CodeBlock(
+                        code = codeBlockLines.joinToString("\n"),
+                        searchQuery = searchQuery
+                    )
                     codeBlockLines.clear()
                     inCodeBlock = false
                 } else {
@@ -217,7 +250,8 @@ fun MarkdownContent(
                         text = MarkdownHelper.parseInlineMarkdown(
                             trimmed.substring(2),
                             MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.onSurface
+                            MaterialTheme.colorScheme.onSurface,
+                            searchQuery
                         ),
                         style = MaterialTheme.typography.headlineLarge.copy(
                             fontWeight = FontWeight.Black,
@@ -232,7 +266,8 @@ fun MarkdownContent(
                         text = MarkdownHelper.parseInlineMarkdown(
                             trimmed.substring(3),
                             MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.onSurface
+                            MaterialTheme.colorScheme.onSurface,
+                            searchQuery
                         ),
                         style = MaterialTheme.typography.headlineMedium.copy(
                             fontWeight = FontWeight.Bold,
@@ -247,7 +282,8 @@ fun MarkdownContent(
                         text = MarkdownHelper.parseInlineMarkdown(
                             trimmed.substring(4),
                             MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.onSurface
+                            MaterialTheme.colorScheme.onSurface,
+                            searchQuery
                         ),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.SemiBold,
@@ -263,6 +299,7 @@ fun MarkdownContent(
                     TodoItemRow(
                         isChecked = false,
                         text = taskText,
+                        searchQuery = searchQuery,
                         onToggle = { onTodoToggle?.invoke(index) }
                     )
                 }
@@ -272,6 +309,7 @@ fun MarkdownContent(
                     TodoItemRow(
                         isChecked = true,
                         text = taskText,
+                        searchQuery = searchQuery,
                         onToggle = { onTodoToggle?.invoke(index) }
                     )
                 }
@@ -292,7 +330,8 @@ fun MarkdownContent(
                             text = MarkdownHelper.parseInlineMarkdown(
                                 itemText,
                                 MaterialTheme.colorScheme.primary,
-                                MaterialTheme.colorScheme.onSurface
+                                MaterialTheme.colorScheme.onSurface,
+                                searchQuery
                             ),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurface
@@ -321,7 +360,8 @@ fun MarkdownContent(
                             text = MarkdownHelper.parseInlineMarkdown(
                                 quoteText,
                                 MaterialTheme.colorScheme.primary,
-                                MaterialTheme.colorScheme.onSurface
+                                MaterialTheme.colorScheme.onSurface,
+                                searchQuery
                             ),
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 fontStyle = FontStyle.Italic
@@ -336,7 +376,8 @@ fun MarkdownContent(
                         text = MarkdownHelper.parseInlineMarkdown(
                             line,
                             MaterialTheme.colorScheme.primary,
-                            MaterialTheme.colorScheme.onSurface
+                            MaterialTheme.colorScheme.onSurface,
+                            searchQuery
                         ),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -351,7 +392,10 @@ fun MarkdownContent(
 
         // Catch unclosed code block at end
         if (inCodeBlock && codeBlockLines.isNotEmpty()) {
-            CodeBlock(code = codeBlockLines.joinToString("\n"))
+            CodeBlock(
+                code = codeBlockLines.joinToString("\n"),
+                searchQuery = searchQuery
+            )
         }
     }
 }
@@ -360,6 +404,7 @@ fun MarkdownContent(
 fun TodoItemRow(
     isChecked: Boolean,
     text: String,
+    searchQuery: String = "",
     onToggle: () -> Unit
 ) {
     Row(
@@ -384,7 +429,8 @@ fun TodoItemRow(
             text = MarkdownHelper.parseInlineMarkdown(
                 text,
                 MaterialTheme.colorScheme.primary,
-                MaterialTheme.colorScheme.onSurface
+                MaterialTheme.colorScheme.onSurface,
+                searchQuery
             ),
             style = MaterialTheme.typography.bodyLarge.copy(
                 textDecoration = if (isChecked) TextDecoration.LineThrough else TextDecoration.None
@@ -395,7 +441,7 @@ fun TodoItemRow(
 }
 
 @Composable
-fun CodeBlock(code: String) {
+fun CodeBlock(code: String, searchQuery: String = "") {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -405,8 +451,29 @@ fun CodeBlock(code: String) {
             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp))
             .padding(12.dp)
     ) {
+        val annotatedCode = buildAnnotatedString {
+            append(code)
+            if (searchQuery.isNotBlank()) {
+                var startIndex = 0
+                while (startIndex < code.length) {
+                    val foundIndex = code.indexOf(searchQuery, startIndex, ignoreCase = true)
+                    if (foundIndex == -1) break
+                    
+                    addStyle(
+                        style = SpanStyle(
+                            background = Color.Yellow.copy(alpha = 0.4f),
+                            color = Color.Black
+                        ),
+                        start = foundIndex,
+                        end = foundIndex + searchQuery.length
+                    )
+                    startIndex = foundIndex + searchQuery.length
+                }
+            }
+        }
+
         Text(
-            text = code,
+            text = annotatedCode,
             fontFamily = FontFamily.Monospace,
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,

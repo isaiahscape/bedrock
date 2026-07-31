@@ -98,6 +98,8 @@ fun NoteEditScreen(
     var showTagDialog by remember { mutableStateOf(false) }
     var showReminderPicker by remember { mutableStateOf(false) }
     var showTabList by remember { mutableStateOf(false) }
+    var isSearchActive by remember { mutableStateOf(false) }
+    var localSearchQuery by remember { mutableStateOf("") }
 
     val androidContext = LocalContext.current
 
@@ -160,50 +162,93 @@ fun NoteEditScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { },
-                navigationIcon = {
-                    IconButton(onClick = { saveAndBack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { isPinned = !isPinned }) {
-                        Icon(
-                            imageVector = if (isPinned) Icons.Default.PushPin else Icons.Outlined.PushPin,
-                            contentDescription = "Pin"
+            if (isSearchActive) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding(),
+                    color = MaterialTheme.colorScheme.background,
+                    tonalElevation = 4.dp
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { 
+                            isSearchActive = false
+                            localSearchQuery = ""
+                        }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Close Search")
+                        }
+                        
+                        TextField(
+                            value = localSearchQuery,
+                            onValueChange = { localSearchQuery = it },
+                            placeholder = { Text("Search in note...") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            )
                         )
-                    }
-                    IconButton(onClick = { showSecurityDialog = true }) {
-                        Icon(
-                            imageVector = if (isEncrypted) Icons.Default.Lock else Icons.Outlined.Lock,
-                            contentDescription = "Security",
-                            tint = if (isEncrypted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    IconButton(
-                        onClick = {
-                            viewMode = when (viewMode) {
-                                EditorViewMode.EDIT -> EditorViewMode.PREVIEW
-                                else -> EditorViewMode.EDIT
+                        
+                        if (localSearchQuery.isNotEmpty()) {
+                            IconButton(onClick = { localSearchQuery = "" }) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear")
                             }
                         }
-                    ) {
-                        Icon(
-                            imageVector = if (viewMode == EditorViewMode.EDIT) Icons.Default.Visibility else Icons.Default.Edit,
-                            contentDescription = "Toggle Preview"
-                        )
                     }
-                    IconButton(onClick = { showReminderPicker = true }) {
-                        Icon(
-                            imageVector = if (reminderTime != null) Icons.Default.NotificationsActive else Icons.Default.NotificationsNone,
-                            contentDescription = "Set Reminder",
-                            tint = if (reminderTime != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
-            )
+                }
+            } else {
+                TopAppBar(
+                    title = { },
+                    navigationIcon = {
+                        IconButton(onClick = { saveAndBack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { isPinned = !isPinned }) {
+                            Icon(
+                                imageVector = if (isPinned) Icons.Default.PushPin else Icons.Outlined.PushPin,
+                                contentDescription = "Pin"
+                            )
+                        }
+                        IconButton(onClick = { showSecurityDialog = true }) {
+                            Icon(
+                                imageVector = if (isEncrypted) Icons.Default.Lock else Icons.Outlined.Lock,
+                                contentDescription = "Security",
+                                tint = if (isEncrypted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        IconButton(
+                            onClick = {
+                                viewMode = when (viewMode) {
+                                    EditorViewMode.EDIT -> EditorViewMode.PREVIEW
+                                    else -> EditorViewMode.EDIT
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = if (viewMode == EditorViewMode.EDIT) Icons.Default.Visibility else Icons.Default.Edit,
+                                contentDescription = "Toggle Preview"
+                            )
+                        }
+                        IconButton(onClick = { showReminderPicker = true }) {
+                            Icon(
+                                imageVector = if (reminderTime != null) Icons.Default.NotificationsActive else Icons.Default.NotificationsNone,
+                                contentDescription = "Set Reminder",
+                                tint = if (reminderTime != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                )
+            }
         }
     ) { innerPadding ->
         with(sharedTransitionScope) {
@@ -240,7 +285,8 @@ fun NoteEditScreen(
                                 ),
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
+                                    .padding(horizontal = 16.dp),
+                                visualTransformation = remember(localSearchQuery) { SearchHighlightTransformation(localSearchQuery) }
                             )
 
                             if (currentTags.isNotEmpty()) {
@@ -278,13 +324,15 @@ fun NoteEditScreen(
                                     ),
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 16.dp)
+                                        .padding(horizontal = 16.dp),
+                                    visualTransformation = remember(localSearchQuery) { SearchHighlightTransformation(localSearchQuery) }
                                 )
                             } else {
                                 Box(modifier = Modifier.padding(horizontal = 16.dp)) {
                                     MarkdownContent(
                                         content = content,
                                         isEditable = true,
+                                        searchQuery = localSearchQuery,
                                         onContentChange = { content = it }
                                     ) { lineIndex ->
                                         content = MarkdownHelper.toggleTodoAtLine(content, lineIndex)
@@ -366,6 +414,14 @@ fun NoteEditScreen(
                         }
                         IconButton(onClick = { /* Redo */ }) {
                             Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo", tint = Color(0xFFB0B0B0))
+                        }
+                        IconButton(onClick = { isSearchActive = !isSearchActive }) {
+                            Icon(
+                                imageVector = Icons.Filled.Search,
+                                contentDescription = "Search",
+                                tint = if (isSearchActive) MaterialTheme.colorScheme.primary else Color(0xFFB0B0B0),
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
                         IconButton(onClick = { showTabList = true }) {
                             Box(

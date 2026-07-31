@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -87,6 +88,8 @@ fun TodoEditor(
     var showTagDialog by remember { mutableStateOf(false) }
     var showReminderPicker by remember { mutableStateOf(false) }
     var showTabList by remember { mutableStateOf(false) }
+    var isSearchActive by remember { mutableStateOf(false) }
+    var localSearchQuery by remember { mutableStateOf("") }
 
     val androidContext = LocalContext.current
 
@@ -146,43 +149,86 @@ fun TodoEditor(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { },
-                navigationIcon = {
-                    IconButton(onClick = { saveAndBack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { isPinned = !isPinned }) {
-                        Icon(
-                            imageVector = if (isPinned) Icons.Default.PushPin else Icons.Outlined.PushPin,
-                            contentDescription = "Pin"
+            if (isSearchActive) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding(),
+                    color = MaterialTheme.colorScheme.background,
+                    tonalElevation = 4.dp
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { 
+                            isSearchActive = false
+                            localSearchQuery = ""
+                        }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Close Search")
+                        }
+                        
+                        TextField(
+                            value = localSearchQuery,
+                            onValueChange = { localSearchQuery = it },
+                            placeholder = { Text("Search in list...") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
+                            )
                         )
+                        
+                        if (localSearchQuery.isNotEmpty()) {
+                            IconButton(onClick = { localSearchQuery = "" }) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear")
+                            }
+                        }
                     }
-                    IconButton(onClick = { showSecurityDialog = true }) {
-                        Icon(
-                            imageVector = if (isEncrypted) Icons.Default.Lock else Icons.Outlined.Lock,
-                            contentDescription = "Security",
-                            tint = if (isEncrypted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    IconButton(onClick = { showReminderPicker = true }) {
-                        Icon(
-                            imageVector = if (reminderTime != null) Icons.Default.NotificationsActive else Icons.Default.NotificationsNone,
-                            contentDescription = "Set Reminder",
-                            tint = if (reminderTime != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                    IconButton(onClick = { imageLauncher.launch("image/*") }) {
-                        Icon(
-                            imageVector = Icons.Default.Image,
-                            contentDescription = "Insert Image"
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
-            )
+                }
+            } else {
+                TopAppBar(
+                    title = { },
+                    navigationIcon = {
+                        IconButton(onClick = { saveAndBack() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { isPinned = !isPinned }) {
+                            Icon(
+                                imageVector = if (isPinned) Icons.Default.PushPin else Icons.Outlined.PushPin,
+                                contentDescription = "Pin"
+                            )
+                        }
+                        IconButton(onClick = { showSecurityDialog = true }) {
+                            Icon(
+                                imageVector = if (isEncrypted) Icons.Default.Lock else Icons.Outlined.Lock,
+                                contentDescription = "Security",
+                                tint = if (isEncrypted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        IconButton(onClick = { showReminderPicker = true }) {
+                            Icon(
+                                imageVector = if (reminderTime != null) Icons.Default.NotificationsActive else Icons.Default.NotificationsNone,
+                                contentDescription = "Set Reminder",
+                                tint = if (reminderTime != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                        IconButton(onClick = { imageLauncher.launch("image/*") }) {
+                            Icon(
+                                imageVector = Icons.Default.Image,
+                                contentDescription = "Insert Image"
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                )
+            }
         }
     ) { innerPadding ->
         with(sharedTransitionScope) {
@@ -214,7 +260,8 @@ fun TodoEditor(
                                     focusedIndicatorColor = Color.Transparent,
                                     unfocusedIndicatorColor = Color.Transparent
                                 ),
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                                visualTransformation = remember(localSearchQuery) { SearchHighlightTransformation(localSearchQuery) }
                             )
 
                             if (currentTags.isNotEmpty()) {
@@ -262,6 +309,7 @@ fun TodoEditor(
                         itemsIndexed(items, key = { _, item -> item.id }) { index, item ->
                             TodoItemRow(
                                 item = item,
+                                searchQuery = localSearchQuery,
                                 onTextChanged = { newText ->
                                     items[index] = item.copy(text = newText)
                                 },
@@ -339,6 +387,14 @@ fun TodoEditor(
                         }
                         IconButton(onClick = { /* Redo */ }) {
                             Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo", tint = Color(0xFFB0B0B0))
+                        }
+                        IconButton(onClick = { isSearchActive = !isSearchActive }) {
+                            Icon(
+                                imageVector = Icons.Filled.Search,
+                                contentDescription = "Search",
+                                tint = if (isSearchActive) MaterialTheme.colorScheme.primary else Color(0xFFB0B0B0),
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
                         IconButton(onClick = { showTabList = true }) {
                             Box(
@@ -426,6 +482,7 @@ data class TodoItemState(
 @Composable
 fun TodoItemRow(
     item: TodoItemState,
+    searchQuery: String = "",
     onTextChanged: (String) -> Unit,
     onCheckedChange: (Boolean) -> Unit,
     onDelete: () -> Unit,
@@ -463,7 +520,8 @@ fun TodoItemRow(
             keyboardActions = KeyboardActions(
                 onDone = { onEnterPressed() }
             ),
-            singleLine = true
+            singleLine = true,
+            visualTransformation = remember(searchQuery) { SearchHighlightTransformation(searchQuery) }
         )
 
         IconButton(onClick = onDelete) {

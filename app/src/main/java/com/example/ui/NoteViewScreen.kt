@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import com.example.data.Note
 import com.example.util.MarkdownContent
+import com.example.util.MarkdownHelper
 import com.example.viewmodel.NoteViewModel
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
@@ -65,33 +66,78 @@ fun NoteViewScreen(
     var showActionMenu by remember { mutableStateOf(false) }
     var showTemplateDialog by remember { mutableStateOf(false) }
     var showTabList by remember { mutableStateOf(false) }
+    var isSearchActive by remember { mutableStateOf(false) }
+    var localSearchQuery by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                },
-                actions = {
-                    if (note != null) {
-                        IconButton(onClick = { viewModel.togglePin(note) }) {
-                            Icon(
-                                imageVector = if (note.isPinned) Icons.Default.PushPin else Icons.Outlined.PushPin,
-                                contentDescription = "Pin"
+            if (isSearchActive) {
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .statusBarsPadding(),
+                    color = MaterialTheme.colorScheme.background,
+                    tonalElevation = 4.dp
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = { 
+                            isSearchActive = false
+                            localSearchQuery = ""
+                        }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Close Search")
+                        }
+                        
+                        TextField(
+                            value = localSearchQuery,
+                            onValueChange = { localSearchQuery = it },
+                            placeholder = { Text("Search in note...") },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent
                             )
+                        )
+                        
+                        if (localSearchQuery.isNotEmpty()) {
+                            IconButton(onClick = { localSearchQuery = "" }) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear")
+                            }
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                }
+            } else {
+                TopAppBar(
+                    title = { },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back"
+                            )
+                        }
+                    },
+                    actions = {
+                        if (note != null) {
+                            IconButton(onClick = { viewModel.togglePin(note) }) {
+                                Icon(
+                                    imageVector = if (note.isPinned) Icons.Default.PushPin else Icons.Outlined.PushPin,
+                                    contentDescription = "Pin"
+                                )
+                            }
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background
+                    )
                 )
-            )
+            }
         }
     ) { innerPadding ->
         with(sharedTransitionScope) {
@@ -114,7 +160,12 @@ fun NoteViewScreen(
                                 .padding(bottom = 100.dp) // space for bottom bar
                         ) {
                             Text(
-                                text = note.title,
+                                text = MarkdownHelper.parseInlineMarkdown(
+                                    text = note.title,
+                                    primaryColor = MaterialTheme.colorScheme.primary,
+                                    onSurfaceColor = MaterialTheme.colorScheme.onSurface,
+                                    searchQuery = localSearchQuery
+                                ),
                                 style = MaterialTheme.typography.headlineSmall.copy(
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 24.sp
@@ -147,6 +198,7 @@ fun NoteViewScreen(
                             MarkdownContent(
                                 content = note.content,
                                 isEditable = true, // Allow resizing in view mode
+                                searchQuery = localSearchQuery,
                                 onContentChange = { newContent ->
                                     viewModel.saveNote(
                                         id = note.id,
@@ -204,11 +256,11 @@ fun NoteViewScreen(
                     BreadcrumbPillToolbar(
                         onLogoClick = { showActionMenu = !showActionMenu }
                     ) {
-                        IconButton(onClick = { /* Search */ }) {
+                        IconButton(onClick = { isSearchActive = !isSearchActive }) {
                             Icon(
                                 imageVector = Icons.Filled.Search,
                                 contentDescription = "Search",
-                                tint = Color(0xFFB0B0B0),
+                                tint = if (isSearchActive) MaterialTheme.colorScheme.primary else Color(0xFFB0B0B0),
                                 modifier = Modifier.size(24.dp)
                             )
                         }
