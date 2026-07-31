@@ -227,6 +227,14 @@ fun BedrockApp(viewModel: NoteViewModel) {
                     onNavigateToSecurity = { navController.navigate("settings_security") },
                     onNavigateToNotifications = { navController.navigate("settings_notifications") },
                     onNavigateToSyncBackup = { navController.navigate("settings_sync_backup") },
+                    onNavigateToDeveloper = { navController.navigate("settings_developer") },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable("settings_developer") {
+                DeveloperSettingsScreen(
+                    viewModel = viewModel,
                     onBack = { navController.popBackStack() }
                 )
             }

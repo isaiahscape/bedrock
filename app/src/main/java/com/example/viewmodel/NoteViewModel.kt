@@ -58,6 +58,12 @@ class NoteViewModel(
         initialValue = null
     )
 
+    val developerModeEnabled: StateFlow<Boolean> = preferenceManager.developerModeEnabled.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = false
+    )
+
     // Sync state
     val isOfflineMode: StateFlow<Boolean> = repository.isOfflineMode
     val syncLogs: Flow<List<SyncLog>> = repository.syncLogs
@@ -165,6 +171,33 @@ class NoteViewModel(
     fun setUserImageUri(uri: String?) {
         viewModelScope.launch {
             preferenceManager.setUserImageUri(uri)
+        }
+    }
+
+    fun setDeveloperMode(enabled: Boolean) {
+        viewModelScope.launch {
+            preferenceManager.setDeveloperMode(enabled)
+        }
+    }
+
+    fun generateLogsFile(context: android.content.Context, onComplete: (String) -> Unit) {
+        viewModelScope.launch {
+            val logs = StringBuilder()
+            logs.append("Bedrock Debug Logs\n")
+            logs.append("==================\n")
+            logs.append("Device: ${android.os.Build.MODEL}\n")
+            logs.append("Android Version: ${android.os.Build.VERSION.RELEASE}\n")
+            logs.append("Timestamp: ${System.currentTimeMillis()}\n\n")
+            
+            logs.append("Recent Sync Logs:\n")
+            repository.syncLogs.first().forEach { log ->
+                logs.append("[${log.timestamp}] ${log.action} - ${log.status}\n")
+            }
+
+            val fileName = "bedrock_logs_${System.currentTimeMillis()}.txt"
+            val file = java.io.File(context.filesDir, fileName)
+            file.writeText(logs.toString())
+            onComplete(file.absolutePath)
         }
     }
 

@@ -18,6 +18,7 @@ class PreferenceManager(private val context: Context) {
         val MASTER_PASSWORD = stringPreferencesKey("master_password")
         val USER_NAME = stringPreferencesKey("user_name")
         val USER_IMAGE_URI = stringPreferencesKey("user_image_uri")
+        val DEVELOPER_MODE_ENABLED = androidx.datastore.preferences.core.booleanPreferencesKey("developer_mode_enabled")
     }
 
     val themeMode: Flow<String> = context.dataStore.data.map { preferences ->
@@ -34,6 +35,10 @@ class PreferenceManager(private val context: Context) {
 
     val userImageUri: Flow<String?> = context.dataStore.data.map { preferences ->
         preferences[USER_IMAGE_URI]
+    }
+
+    val developerModeEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[DEVELOPER_MODE_ENABLED] ?: false
     }
 
     suspend fun setThemeMode(mode: String) {
@@ -61,6 +66,12 @@ class PreferenceManager(private val context: Context) {
             } else {
                 preferences[USER_IMAGE_URI] = uri
             }
+        }
+    }
+
+    suspend fun setDeveloperMode(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[DEVELOPER_MODE_ENABLED] = enabled
         }
     }
 }

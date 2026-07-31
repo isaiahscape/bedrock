@@ -1,5 +1,6 @@
 package com.example.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,12 +20,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.viewmodel.NoteViewModel
+import android.widget.Toast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,10 +38,15 @@ fun SettingsScreen(
     onNavigateToSecurity: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToSyncBackup: () -> Unit,
+    onNavigateToDeveloper: () -> Unit,
     onBack: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
+    val devModeEnabled by viewModel.developerModeEnabled.collectAsState()
+    
+    var devClickCount by remember { mutableStateOf(0) }
 
     Scaffold(
         topBar = {
@@ -113,6 +122,18 @@ fun SettingsScreen(
                 )
             }
 
+            if (devModeEnabled) {
+                // Group 5: Developer Options
+                SettingsGroup {
+                    ExpressiveSettingsItem(
+                        title = "Developer Options",
+                        subtitle = "Debugging & Logs",
+                        icon = Icons.Default.Terminal,
+                        onClick = onNavigateToDeveloper
+                    )
+                }
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             // About Section (Group 4)
@@ -136,7 +157,19 @@ fun SettingsScreen(
                 Text(
                     text = "Bedrock",
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.clickable {
+                        if (!devModeEnabled) {
+                            devClickCount++
+                            if (devClickCount >= 7) {
+                                viewModel.setDeveloperMode(true)
+                                Toast.makeText(context, "Developer Mode Enabled!", Toast.LENGTH_SHORT).show()
+                                devClickCount = 0
+                            } else if (devClickCount > 3) {
+                                Toast.makeText(context, "You are now ${7 - devClickCount} steps away from being a developer!", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
                 )
                 Text(
                     text = "Version 1.0.0",
