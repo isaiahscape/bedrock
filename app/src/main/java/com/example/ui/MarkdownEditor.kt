@@ -64,7 +64,16 @@ fun MarkdownEditor(
     var showReminderPicker by remember { mutableStateOf(false) }
     var showTabList by remember { mutableStateOf(false) }
 
-    val context = LocalContext.current
+    val androidContext = LocalContext.current
+
+    val imageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val imageMarkdown = "\n![Image]($it){w=300}\n"
+            content += imageMarkdown
+        }
+    }
 
     val currentTags = remember(tagsString) {
         if (tagsString.isBlank()) emptyList()
@@ -91,7 +100,7 @@ fun MarkdownEditor(
             passcode = passcode,
             type = "markdown",
             reminderTime = reminderTime,
-            context = context
+            context = androidContext
         )
         onBack()
     }
@@ -113,15 +122,6 @@ fun MarkdownEditor(
             syntax?.let { 
                 content = insertFormatting(content, it)
             }
-        }
-    }
-
-    val imageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let {
-            val imageMarkdown = "\n![Image]($it){w=300}\n"
-            content += imageMarkdown
         }
     }
 

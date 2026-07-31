@@ -88,7 +88,7 @@ fun TodoEditor(
     var showReminderPicker by remember { mutableStateOf(false) }
     var showTabList by remember { mutableStateOf(false) }
 
-    val context = LocalContext.current
+    val androidContext = LocalContext.current
 
     val imageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -131,7 +131,7 @@ fun TodoEditor(
             passcode = passcode,
             type = "todo",
             reminderTime = reminderTime,
-            context = context
+            context = androidContext
         )
         onBack()
     }

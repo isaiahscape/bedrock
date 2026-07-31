@@ -5,6 +5,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.DisableSelection
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -130,7 +132,7 @@ fun MarkdownContent(
             val trimmed = line.trim()
 
             // Image Parsing: ![alt](uri){w=300}
-            val imageRegex = """!\[(.*?)]\((.*?)\)(\{w=(\d+)})?""".toRegex()
+            val imageRegex = """!\[(.*?)\]\((.*?)\)(\{w=(\d+)\})?""".toRegex()
             val match = imageRegex.matchEntire(trimmed)
             if (match != null) {
                 val alt = match.groupValues[1]
@@ -138,43 +140,45 @@ fun MarkdownContent(
                 val widthStr = match.groupValues.getOrNull(4)
                 val width = widthStr?.toFloatOrNull() ?: 300f
                 
-                ImageBlock(
-                    uri = uri,
-                    initialWidth = width,
-                    isEditable = isEditable,
-                    onResize = { newWidth ->
-                        if (onContentChange != null) {
-                            val newWidthInt = newWidth.toInt()
-                            val updatedLine = "![$alt]($uri){w=$newWidthInt}"
-                            val updatedLines = lines.toMutableList()
-                            updatedLines[index] = updatedLine
-                            onContentChange(updatedLines.joinToString("\n"))
+                DisableSelection {
+                    ImageBlock(
+                        uri = uri,
+                        initialWidth = width,
+                        isEditable = isEditable,
+                        onResize = { newWidth ->
+                            if (onContentChange != null) {
+                                val newWidthInt = newWidth.toInt()
+                                val updatedLine = "![$alt]($uri){w=$newWidthInt}"
+                                val updatedLines = lines.toMutableList()
+                                updatedLines[index] = updatedLine
+                                onContentChange(updatedLines.joinToString("\n"))
+                            }
+                        },
+                        onDelete = {
+                            if (onContentChange != null) {
+                                val updatedLines = lines.toMutableList()
+                                updatedLines.removeAt(index)
+                                onContentChange(updatedLines.joinToString("\n"))
+                            }
+                        },
+                        onMoveUp = {
+                            if (onContentChange != null && index > 0) {
+                                val updatedLines = lines.toMutableList()
+                                val item = updatedLines.removeAt(index)
+                                updatedLines.add(index - 1, item)
+                                onContentChange(updatedLines.joinToString("\n"))
+                            }
+                        },
+                        onMoveDown = {
+                            if (onContentChange != null && index < lines.size - 1) {
+                                val updatedLines = lines.toMutableList()
+                                val item = updatedLines.removeAt(index)
+                                updatedLines.add(index + 1, item)
+                                onContentChange(updatedLines.joinToString("\n"))
+                            }
                         }
-                    },
-                    onDelete = {
-                        if (onContentChange != null) {
-                            val updatedLines = lines.toMutableList()
-                            updatedLines.removeAt(index)
-                            onContentChange(updatedLines.joinToString("\n"))
-                        }
-                    },
-                    onMoveUp = {
-                        if (onContentChange != null && index > 0) {
-                            val updatedLines = lines.toMutableList()
-                            val item = updatedLines.removeAt(index)
-                            updatedLines.add(index - 1, item)
-                            onContentChange(updatedLines.joinToString("\n"))
-                        }
-                    },
-                    onMoveDown = {
-                        if (onContentChange != null && index < lines.size - 1) {
-                            val updatedLines = lines.toMutableList()
-                            val item = updatedLines.removeAt(index)
-                            updatedLines.add(index + 1, item)
-                            onContentChange(updatedLines.joinToString("\n"))
-                        }
-                    }
-                )
+                    )
+                }
                 return@forEachIndexed
             }
 

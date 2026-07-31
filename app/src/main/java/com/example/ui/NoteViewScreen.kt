@@ -39,7 +39,7 @@ fun NoteViewScreen(
     onOpenCommandPalette: () -> Unit,
     onEditNote: (Long) -> Unit
 ) {
-    val context = LocalContext.current
+    val androidContext = LocalContext.current
     
     val note = remember(noteId, allNotes) {
         allNotes.find { it.id == noteId }
@@ -58,7 +58,7 @@ fun NoteViewScreen(
                     passcode = note.passcodeHash,
                     type = note.type,
                     reminderTime = note.reminderTime,
-                    context = context
+                    context = androidContext
                 )
             }
         }
@@ -160,7 +160,7 @@ fun NoteViewScreen(
                                         passcode = note.passcodeHash,
                                         type = note.type,
                                         reminderTime = note.reminderTime,
-                                        context = context
+                                        context = androidContext
                                     )
                                 },
                                 onTodoToggle = { lineIndex ->
@@ -292,7 +292,7 @@ fun NoteViewScreen(
                     passcode = note.passcodeHash,
                     type = note.type,
                     reminderTime = note.reminderTime,
-                    context = context
+                    context = androidContext
                 )
             }
         )

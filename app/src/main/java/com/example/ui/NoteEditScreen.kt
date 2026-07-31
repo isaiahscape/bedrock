@@ -99,7 +99,7 @@ fun NoteEditScreen(
     var showReminderPicker by remember { mutableStateOf(false) }
     var showTabList by remember { mutableStateOf(false) }
 
-    val context = LocalContext.current
+    val androidContext = LocalContext.current
 
     val imageLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -135,7 +135,7 @@ fun NoteEditScreen(
             passcode = passcode,
             type = "note",
             reminderTime = reminderTime,
-            context = context
+            context = androidContext
         )
         onBack()
     }
