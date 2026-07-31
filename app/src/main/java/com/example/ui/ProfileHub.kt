@@ -33,11 +33,12 @@ fun ProfileHubContent(
     onNavigateToSettings: () -> Unit,
     onOpenRecycleBin: () -> Unit
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     var editedName by remember(userName) { mutableStateOf(userName) }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { viewModel.setUserImageUri(it.toString()) }
+        uri?.let { viewModel.updateProfileImage(context, it) }
     }
 
     Column(

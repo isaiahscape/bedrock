@@ -175,6 +175,15 @@ class NoteViewModel(
         }
     }
 
+    fun updateProfileImage(context: Context, uri: android.net.Uri) {
+        viewModelScope.launch {
+            val localPath = FileHelper.copyUriToInternalStorage(context, uri, "profile_picture.jpg")
+            localPath?.let { 
+                preferenceManager.setUserImageUri(it)
+            }
+        }
+    }
+
     fun setDeveloperMode(enabled: Boolean) {
         viewModelScope.launch {
             preferenceManager.setDeveloperMode(enabled)

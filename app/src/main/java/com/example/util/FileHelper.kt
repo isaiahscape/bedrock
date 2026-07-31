@@ -54,4 +54,21 @@ object FileHelper {
             null
         }
     }
+
+    /**
+     * Copies a URI to internal storage and returns the local file path.
+     */
+    fun copyUriToInternalStorage(context: Context, uri: Uri, fileName: String): String? {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(uri)
+            val file = File(context.filesDir, fileName)
+            FileOutputStream(file).use { outputStream ->
+                inputStream?.copyTo(outputStream)
+            }
+            Uri.fromFile(file).toString()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 }
