@@ -3,6 +3,7 @@ package com.example.ui
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -41,6 +42,7 @@ fun MarkdownEditor(
     viewModel: NoteViewModel,
     existingNote: Note?,
     availableTags: List<Tag>,
+    openNotes: List<Note>,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     onBack: () -> Unit,
@@ -60,17 +62,9 @@ fun MarkdownEditor(
     var showTemplateDialog by remember { mutableStateOf(false) }
     var showTagDialog by remember { mutableStateOf(false) }
     var showReminderPicker by remember { mutableStateOf(false) }
+    var showTabList by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
-
-    val imageLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        uri?.let {
-            val imageMarkdown = "\n![Image]($it){w=300}\n"
-            content += imageMarkdown
-        }
-    }
 
     val currentTags = remember(tagsString) {
         if (tagsString.isBlank()) emptyList()
@@ -100,6 +94,35 @@ fun MarkdownEditor(
             context = context
         )
         onBack()
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.keyboardEvent.collect { action ->
+            val syntax = when (action) {
+                "bold" -> "**"
+                "italic" -> "*"
+                "underline" -> "<u>"
+                "header_1" -> "# "
+                "header_2" -> "## "
+                "save_note" -> {
+                    saveAndBack()
+                    null
+                }
+                else -> null
+            }
+            syntax?.let { 
+                content = insertFormatting(content, it)
+            }
+        }
+    }
+
+    val imageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val imageMarkdown = "\n![Image]($it){w=300}\n"
+            content += imageMarkdown
+        }
     }
 
     Scaffold(
@@ -349,6 +372,21 @@ fun MarkdownEditor(
                         IconButton(onClick = { /* Redo */ }) {
                             Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo", tint = Color(0xFFB0B0B0))
                         }
+                        IconButton(onClick = { showTabList = true }) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .border(1.5.dp, Color(0xFFB0B0B0), RoundedCornerShape(6.dp))
+                            ) {
+                                Text(
+                                    text = openNotes.size.toString(),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFB0B0B0)
+                                )
+                            }
+                        }
                         IconButton(onClick = { saveAndBack() }) {
                             Icon(Icons.Default.Check, contentDescription = "Done", tint = MaterialTheme.colorScheme.primary)
                         }
@@ -394,6 +432,20 @@ fun MarkdownEditor(
                 reminderTime = time
                 showReminderPicker = false
             }
+        )
+    }
+
+    if (showTabList) {
+        TabListBottomSheet(
+            openNotes = openNotes,
+            activeNoteId = noteId,
+            onTabClick = { id ->
+                viewModel.switchTab(id)
+                // Navigation is handled by BedrockApp LaunchedEffect or similar?
+                // Actually, we should trigger a navigation here if on mobile.
+            },
+            onTabClose = { id -> viewModel.closeTab(id) },
+            onDismiss = { showTabList = false }
         )
     }
 }

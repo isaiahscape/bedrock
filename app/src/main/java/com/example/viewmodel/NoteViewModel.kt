@@ -70,6 +70,33 @@ class NoteViewModel(
 
     val allTags: Flow<List<Tag>> = repository.allTags
 
+    // Workspace / Tab Management
+    private val _openTabs = MutableStateFlow<List<Long>>(emptyList())
+    val openTabs: StateFlow<List<Long>> = _openTabs.asStateFlow()
+
+    private val _activeTabId = MutableStateFlow<Long?>(null)
+    val activeTabId: StateFlow<Long?> = _activeTabId.asStateFlow()
+
+    fun openNoteInTab(id: Long) {
+        if (!_openTabs.value.contains(id)) {
+            _openTabs.update { it + id }
+        }
+        _activeTabId.value = id
+    }
+
+    fun closeTab(id: Long) {
+        _openTabs.update { it.filter { tabId -> tabId != id } }
+        if (_activeTabId.value == id) {
+            _activeTabId.value = _openTabs.value.lastOrNull()
+        }
+    }
+
+    fun switchTab(id: Long) {
+        if (_openTabs.value.contains(id)) {
+            _activeTabId.value = id
+        }
+    }
+
     // Filtered Notes Flow
     val notes: StateFlow<List<Note>> = combine(
         repository.allNotes,
@@ -266,6 +293,14 @@ class NoteViewModel(
         viewModelScope.launch {
             repository.clearLogs()
         }
+    }
+
+    // Keyboard Shortcuts
+    private val _keyboardEvent = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val keyboardEvent = _keyboardEvent.asSharedFlow()
+
+    fun triggerKeyboardShortcut(action: String) {
+        _keyboardEvent.tryEmit(action)
     }
 
     suspend fun getBackupJson(): String {

@@ -3,6 +3,7 @@ package com.example.ui
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -41,6 +42,7 @@ fun NoteEditScreen(
     noteType: String,
     viewModel: NoteViewModel,
     allNotes: List<Note>,
+    openNotes: List<Note>,
     availableTags: List<Tag>,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
@@ -57,6 +59,7 @@ fun NoteEditScreen(
             viewModel = viewModel,
             existingNote = existingNote,
             availableTags = availableTags,
+            openNotes = openNotes,
             sharedTransitionScope = sharedTransitionScope,
             animatedVisibilityScope = animatedVisibilityScope,
             onBack = onBack,
@@ -71,6 +74,7 @@ fun NoteEditScreen(
             viewModel = viewModel,
             existingNote = existingNote,
             availableTags = availableTags,
+            openNotes = openNotes,
             sharedTransitionScope = sharedTransitionScope,
             animatedVisibilityScope = animatedVisibilityScope,
             onBack = onBack,
@@ -93,6 +97,7 @@ fun NoteEditScreen(
     var showTemplateDialog by remember { mutableStateOf(false) }
     var showTagDialog by remember { mutableStateOf(false) }
     var showReminderPicker by remember { mutableStateOf(false) }
+    var showTabList by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -133,6 +138,24 @@ fun NoteEditScreen(
             context = context
         )
         onBack()
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.keyboardEvent.collect { action ->
+            val syntax = when (action) {
+                "bold" -> "**"
+                "italic" -> "*"
+                "underline" -> "<u>"
+                "save_note" -> {
+                    saveAndBack()
+                    null
+                }
+                else -> null
+            }
+            syntax?.let { 
+                content = insertFormatting(content, it)
+            }
+        }
     }
 
     Scaffold(
@@ -344,6 +367,21 @@ fun NoteEditScreen(
                         IconButton(onClick = { /* Redo */ }) {
                             Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo", tint = Color(0xFFB0B0B0))
                         }
+                        IconButton(onClick = { showTabList = true }) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .border(1.5.dp, Color(0xFFB0B0B0), RoundedCornerShape(6.dp))
+                            ) {
+                                Text(
+                                    text = openNotes.size.toString(),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFB0B0B0)
+                                )
+                            }
+                        }
                         IconButton(onClick = { saveAndBack() }) {
                             Icon(Icons.Default.Check, contentDescription = "Done", tint = MaterialTheme.colorScheme.primary)
                         }
@@ -389,6 +427,18 @@ fun NoteEditScreen(
                 reminderTime = time
                 showReminderPicker = false
             }
+        )
+    }
+
+    if (showTabList) {
+        TabListBottomSheet(
+            openNotes = openNotes,
+            activeNoteId = noteId,
+            onTabClick = { id ->
+                viewModel.switchTab(id)
+            },
+            onTabClose = { id -> viewModel.closeTab(id) },
+            onDismiss = { showTabList = false }
         )
     }
 }

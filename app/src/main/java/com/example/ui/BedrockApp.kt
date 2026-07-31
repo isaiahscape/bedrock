@@ -4,10 +4,12 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Note
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -20,13 +22,23 @@ import com.example.data.AppDatabase
 import com.example.data.NoteRepository
 import com.example.viewmodel.NoteViewModel
 import com.example.viewmodel.NoteViewModelFactory
+import androidx.window.core.layout.WindowWidthSizeClass
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun BedrockApp(viewModel: NoteViewModel) {
     val navController = rememberNavController()
+    val adaptiveInfo = currentWindowAdaptiveInfo()
+    val isLargeScreen = adaptiveInfo.windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.COMPACT
 
     val notes by viewModel.notes.collectAsStateWithLifecycle()
+    val openTabIds by viewModel.openTabs.collectAsStateWithLifecycle()
+    val activeTabId by viewModel.activeTabId.collectAsStateWithLifecycle()
+    
+    val openNotes = remember(notes, openTabIds) {
+        notes.filter { it.id in openTabIds }
+    }
+
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val selectedTag by viewModel.selectedTag.collectAsStateWithLifecycle()
     val unlockedNoteIds by viewModel.unlockedNoteIds.collectAsStateWithLifecycle()
@@ -44,6 +56,22 @@ fun BedrockApp(viewModel: NoteViewModel) {
     var showSyncCenterDialog by remember { mutableStateOf(false) }
     var showRecycleBinDialog by remember { mutableStateOf(false) }
     var showCommandPalette by remember { mutableStateOf(false) }
+
+    LaunchedEffect(viewModel) {
+        viewModel.keyboardEvent.collect { action ->
+            when (action) {
+                "new_note" -> navController.navigate("note_edit/0?type=note")
+                "command_palette" -> showCommandPalette = !showCommandPalette
+                "focus_search" -> {
+                    navController.popBackStack("note_list", inclusive = false)
+                    // Focus search logic would go here
+                }
+                "close_tab" -> {
+                    activeTabId?.let { viewModel.closeTab(it) }
+                }
+            }
+        }
+    }
 
     val commands = remember(viewModel, navController) {
         listOf(
@@ -72,119 +100,158 @@ fun BedrockApp(viewModel: NoteViewModel) {
             },
             Command("search", "Search Notes", Icons.Default.Search) {
                 navController.popBackStack("note_list", inclusive = false)
-                // We could add a side effect to focus search, but for now just navigating back
             }
         )
     }
 
     SharedTransitionLayout {
-        NavHost(
-            navController = navController,
-            startDestination = "note_list"
-        ) {
-            composable("note_list") {
-                NoteListScreen(
+        AdaptiveScaffold(
+            showSidebar = isLargeScreen,
+            sidebarContent = {
+                NoteSidebar(
                     viewModel = viewModel,
                     notes = notes,
-                    tags = tags,
-                    searchQuery = searchQuery,
-                    selectedTag = selectedTag,
-                    unlockedNoteIds = unlockedNoteIds,
-                    isOfflineMode = isOfflineMode,
-                    userName = userName,
-                    userImageUri = userImageUri,
-                    sharedTransitionScope = this@SharedTransitionLayout,
-                    animatedVisibilityScope = this@composable,
-                    onNavigateToEditNote = { noteId ->
-                        if (noteId == 0L) {
-                            navController.navigate("note_edit/0?type=note")
-                        } else {
-                            navController.navigate("note_view/$noteId")
-                        }
+                    activeNoteId = activeTabId,
+                    onNoteClick = { id ->
+                        viewModel.openNoteInTab(id)
+                        navController.navigate("note_view/$id")
                     },
                     onCreateNote = { type ->
                         navController.navigate("note_edit/0?type=$type")
                     },
-                    onOpenSyncCenter = { showSyncCenterDialog = true },
                     onOpenSettings = { navController.navigate("settings") },
-                    onOpenRecycleBin = { showRecycleBinDialog = true }
-                )
-            }
-
-            composable(
-                route = "note_view/{noteId}",
-                arguments = listOf(navArgument("noteId") { type = NavType.LongType })
-            ) { backStackEntry ->
-                val noteId = backStackEntry.arguments?.getLong("noteId") ?: 0L
-                NoteViewScreen(
-                    noteId = noteId,
-                    viewModel = viewModel,
-                    allNotes = notes,
-                    sharedTransitionScope = this@SharedTransitionLayout,
-                    animatedVisibilityScope = this@composable,
-                    onBack = { navController.popBackStack() },
-                    onOpenCommandPalette = { showCommandPalette = true },
-                    onEditNote = { id ->
-                        val note = notes.find { it.id == id }
-                        navController.navigate("note_edit/$id?type=${note?.type ?: "note"}")
-                    }
-                )
-            }
-
-            composable(
-                route = "note_edit/{noteId}?type={type}",
-                arguments = listOf(
-                    navArgument("noteId") { type = NavType.LongType },
-                    navArgument("type") { type = NavType.StringType; defaultValue = "note" }
-                )
-            ) { backStackEntry ->
-                val noteId = backStackEntry.arguments?.getLong("noteId") ?: 0L
-                val noteType = backStackEntry.arguments?.getString("type") ?: "note"
-                NoteEditScreen(
-                    noteId = noteId,
-                    noteType = noteType,
-                    viewModel = viewModel,
-                    allNotes = notes,
-                    availableTags = tags,
-                    sharedTransitionScope = this@SharedTransitionLayout,
-                    animatedVisibilityScope = this@composable,
-                    onBack = { navController.popBackStack() },
                     onOpenCommandPalette = { showCommandPalette = true }
                 )
+            },
+            topBar = {
+                if (isLargeScreen && openNotes.isNotEmpty()) {
+                    WorkspaceTabs(
+                        openNotes = openNotes,
+                        activeNoteId = activeTabId,
+                        onTabClick = { id ->
+                            viewModel.switchTab(id)
+                            navController.navigate("note_view/$id")
+                        },
+                        onTabClose = { id -> viewModel.closeTab(id) }
+                    )
+                }
             }
+        ) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = "note_list",
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                composable("note_list") {
+                    NoteListScreen(
+                        viewModel = viewModel,
+                        notes = notes,
+                        tags = tags,
+                        searchQuery = searchQuery,
+                        selectedTag = selectedTag,
+                        unlockedNoteIds = unlockedNoteIds,
+                        isOfflineMode = isOfflineMode,
+                        userName = userName,
+                        userImageUri = userImageUri,
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this@composable,
+                        onNavigateToEditNote = { noteId ->
+                            if (noteId == 0L) {
+                                navController.navigate("note_edit/0?type=note")
+                            } else {
+                                viewModel.openNoteInTab(noteId)
+                                navController.navigate("note_view/$noteId")
+                            }
+                        },
+                        onCreateNote = { type ->
+                            navController.navigate("note_edit/0?type=$type")
+                        },
+                        onOpenSyncCenter = { showSyncCenterDialog = true },
+                        onOpenSettings = { navController.navigate("settings") },
+                        onOpenRecycleBin = { showRecycleBinDialog = true }
+                    )
+                }
 
-            composable("settings") {
-                SettingsScreen(
-                    viewModel = viewModel,
-                    themeMode = themeMode,
-                    onNavigateToAppearance = { navController.navigate("settings_appearance") },
-                    onNavigateToSecurity = { navController.navigate("settings_security") },
-                    onNavigateToNotifications = { navController.navigate("settings_notifications") },
-                    onBack = { navController.popBackStack() }
-                )
-            }
+                composable(
+                    route = "note_view/{noteId}",
+                    arguments = listOf(navArgument("noteId") { type = NavType.LongType })
+                ) { backStackEntry ->
+                    val noteId = backStackEntry.arguments?.getLong("noteId") ?: 0L
+                    LaunchedEffect(noteId) {
+                        viewModel.switchTab(noteId)
+                    }
+                    NoteViewScreen(
+                        noteId = noteId,
+                        viewModel = viewModel,
+                        allNotes = notes,
+                        openNotes = openNotes,
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this@composable,
+                        onBack = { navController.popBackStack() },
+                        onOpenCommandPalette = { showCommandPalette = true },
+                        onEditNote = { id ->
+                            val note = notes.find { it.id == id }
+                            navController.navigate("note_edit/$id?type=${note?.type ?: "note"}")
+                        }
+                    )
+                }
 
-            composable("settings_notifications") {
-                NotificationSettingsScreen(
-                    viewModel = viewModel,
-                    onBack = { navController.popBackStack() }
-                )
-            }
+                composable(
+                    route = "note_edit/{noteId}?type={type}",
+                    arguments = listOf(
+                        navArgument("noteId") { type = NavType.LongType },
+                        navArgument("type") { type = NavType.StringType; defaultValue = "note" }
+                    )
+                ) { backStackEntry ->
+                    val noteId = backStackEntry.arguments?.getLong("noteId") ?: 0L
+                    val noteType = backStackEntry.arguments?.getString("type") ?: "note"
+                    NoteEditScreen(
+                        noteId = noteId,
+                        noteType = noteType,
+                        viewModel = viewModel,
+                        allNotes = notes,
+                        openNotes = openNotes,
+                        availableTags = tags,
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this@composable,
+                        onBack = { navController.popBackStack() },
+                        onOpenCommandPalette = { showCommandPalette = true }
+                    )
+                }
 
-            composable("settings_appearance") {
-                AppearanceSettingsScreen(
-                    viewModel = viewModel,
-                    themeMode = themeMode,
-                    onBack = { navController.popBackStack() }
-                )
-            }
+                composable("settings") {
+                    SettingsScreen(
+                        viewModel = viewModel,
+                        themeMode = themeMode,
+                        onNavigateToAppearance = { navController.navigate("settings_appearance") },
+                        onNavigateToSecurity = { navController.navigate("settings_security") },
+                        onNavigateToNotifications = { navController.navigate("settings_notifications") },
+                        onBack = { navController.popBackStack() }
+                    )
+                }
 
-            composable("settings_security") {
-                SecuritySettingsScreen(
-                    viewModel = viewModel,
-                    masterPin = masterPin ?: "1234",
-                    onBack = { navController.popBackStack() }
-                )
+                composable("settings_notifications") {
+                    NotificationSettingsScreen(
+                        viewModel = viewModel,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable("settings_appearance") {
+                    AppearanceSettingsScreen(
+                        viewModel = viewModel,
+                        themeMode = themeMode,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                composable("settings_security") {
+                    SecuritySettingsScreen(
+                        viewModel = viewModel,
+                        masterPin = masterPin ?: "1234",
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
         }
     }

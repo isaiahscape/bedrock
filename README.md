@@ -7,11 +7,16 @@
 ## Features
 
 - **Minimalist Design**: A pure monochrome aesthetic using Material 3, inspired by modern "Keep" style layouts with premium Pixel Launcher-style expansion animations.
+- **Adaptive Workspace**: Intelligent layout that automatically scales from a single-pane mobile view to a **Two-pane Desktop/Tablet view**. Enjoy a persistent sidebar for your notes and filters on larger screens.
+- **Multi-Note Tabs**: Open multiple notes simultaneously! Manage them via a modern horizontal tab bar on desktops or a quick-access "Tabs" switcher on mobile.
 - **Floating Profile Hub**: A central "Command Center" for your identity. Set your name, choose a profile picture from your gallery, and access app-wide utilities from a modern modal bottom sheet.
 - **Versatile Editing Modes**:
     - **Plain Notes**: A lightweight, borderless text editing experience.
     - **Markdown Editor**: Dedicated environment with live preview, split-screen mode, and a quick formatting toolbar (H1, H2, Bold, Lists, etc.).
     - **Structured To-do Lists**: Dedicated checklist mode with auto-creation of new items via the keyboard and native task management.
+- **Pro Keyboard Shortcuts**: Full support for physical keyboards on tablets and desktops.
+    - **Workflow**: `Ctrl+N` (New), `Ctrl+S` (Save), `Ctrl+W` (Close Tab), `Ctrl+P` (Command Palette), `Ctrl+F` (Search).
+    - **Editing**: `Ctrl+B` (Bold), `Ctrl+I` (Italic), `Ctrl+U` (Underline), `Ctrl+1/2` (Headers).
 - **Universal Scheduler**: Set precise Date & Time reminders for any note type. Includes system notifications that deep-link directly back to your note.
 - **Reminders & Reliability Center**: A dedicated utility section in settings to manage notification importance, bypass battery restrictions for reliable delivery, and handle exact alarm permissions.
 - **Material Expressive Settings**: A modern, hierarchical settings structure with status summaries and bold headers.
@@ -24,6 +29,7 @@
 - **UI**: Jetpack Compose (Material 3 Expressive)
 - **Architecture**: MVVM + Repository Pattern
 - **Persistence**: Room Database (SQLite v3) + DataStore (Preferences)
+- **Adaptive Layout**: Material 3 Adaptive Layouts + WindowSizeClass
 - **Image Loading**: Coil
 - **Scheduling**: AlarmManager + BroadcastReceivers
 - **Navigation**: Jetpack Navigation Compose with Shared Transitions
@@ -43,7 +49,7 @@
 3. Sync Gradle and run the `:app` module on an emulator or physical device.
 
 ## Reliability Tips
-To ensure scheduled reminders are delivered precisely even when your device is in Doze mode, go to **Profile > App Settings > Reminders & Reliability** and enable the **Battery Restriction Bypass**.
+To ensure scheduled reminders are delivered precisely even when your device is in Doze mode, go to **Profile Hub > App Settings > Reminders & Reliability** and enable the **Battery Restriction Bypass**.
 
 ## Application ID
 The project is identified by: `com.bedrock.notes`

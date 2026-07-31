@@ -32,6 +32,7 @@ fun NoteViewScreen(
     noteId: Long,
     viewModel: NoteViewModel,
     allNotes: List<Note>,
+    openNotes: List<Note>,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     onBack: () -> Unit,
@@ -39,12 +40,33 @@ fun NoteViewScreen(
     onEditNote: (Long) -> Unit
 ) {
     val context = LocalContext.current
+    
     val note = remember(noteId, allNotes) {
         allNotes.find { it.id == noteId }
     }
 
+    LaunchedEffect(viewModel) {
+        viewModel.keyboardEvent.collect { action ->
+            if (action == "save_note" && note != null) {
+                viewModel.saveNote(
+                    id = note.id,
+                    title = note.title,
+                    content = note.content,
+                    tags = note.tags,
+                    isPinned = note.isPinned,
+                    isEncrypted = note.isEncrypted,
+                    passcode = note.passcodeHash,
+                    type = note.type,
+                    reminderTime = note.reminderTime,
+                    context = context
+                )
+            }
+        }
+    }
+
     var showActionMenu by remember { mutableStateOf(false) }
     var showTemplateDialog by remember { mutableStateOf(false) }
+    var showTabList by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -216,7 +238,7 @@ fun NoteViewScreen(
                                 modifier = Modifier.size(24.dp)
                             )
                         }
-                        IconButton(onClick = { /* Tabs */ }) {
+                        IconButton(onClick = { showTabList = true }) {
                             Box(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
@@ -224,7 +246,7 @@ fun NoteViewScreen(
                                     .border(1.5.dp, Color(0xFFB0B0B0), RoundedCornerShape(6.dp))
                             ) {
                                 Text(
-                                    text = "1",
+                                    text = openNotes.size.toString(),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = Color(0xFFB0B0B0)
@@ -235,6 +257,20 @@ fun NoteViewScreen(
                 }
             }
         }
+    }
+
+    if (showTabList) {
+        TabListBottomSheet(
+            openNotes = openNotes,
+            activeNoteId = noteId,
+            onTabClick = { id ->
+                viewModel.switchTab(id)
+                onEditNote(id) // Or view? Actually view. 
+                // Wait, BedrockApp handles the navigation.
+            },
+            onTabClose = { id -> viewModel.closeTab(id) },
+            onDismiss = { showTabList = false }
+        )
     }
 
     if (showTemplateDialog && note != null) {

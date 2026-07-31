@@ -3,6 +3,7 @@ package com.example.ui
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -28,11 +29,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.platform.LocalContext
 import com.example.data.Note
 import com.example.data.Tag
 import com.example.viewmodel.NoteViewModel
@@ -46,6 +47,7 @@ fun TodoEditor(
     viewModel: NoteViewModel,
     existingNote: Note?,
     availableTags: List<Tag>,
+    openNotes: List<Note>,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: androidx.compose.animation.AnimatedVisibilityScope,
     onBack: () -> Unit,
@@ -84,6 +86,7 @@ fun TodoEditor(
     var showTemplateDialog by remember { mutableStateOf(false) }
     var showTagDialog by remember { mutableStateOf(false) }
     var showReminderPicker by remember { mutableStateOf(false) }
+    var showTabList by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -131,6 +134,14 @@ fun TodoEditor(
             context = context
         )
         onBack()
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.keyboardEvent.collect { action ->
+            if (action == "save_note") {
+                saveAndBack()
+            }
+        }
     }
 
     Scaffold(
@@ -329,6 +340,21 @@ fun TodoEditor(
                         IconButton(onClick = { /* Redo */ }) {
                             Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo", tint = Color(0xFFB0B0B0))
                         }
+                        IconButton(onClick = { showTabList = true }) {
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .border(1.5.dp, Color(0xFFB0B0B0), RoundedCornerShape(6.dp))
+                            ) {
+                                Text(
+                                    text = openNotes.size.toString(),
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color(0xFFB0B0B0)
+                                )
+                            }
+                        }
                         IconButton(onClick = { saveAndBack() }) {
                             Icon(Icons.Default.Check, contentDescription = "Done", tint = MaterialTheme.colorScheme.primary)
                         }
@@ -375,6 +401,18 @@ fun TodoEditor(
                 reminderTime = time
                 showReminderPicker = false
             }
+        )
+    }
+
+    if (showTabList) {
+        TabListBottomSheet(
+            openNotes = openNotes,
+            activeNoteId = noteId,
+            onTabClick = { id ->
+                viewModel.switchTab(id)
+            },
+            onTabClose = { id -> viewModel.closeTab(id) },
+            onDismiss = { showTabList = false }
         )
     }
 }
