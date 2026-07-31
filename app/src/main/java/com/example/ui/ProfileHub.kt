@@ -127,20 +127,26 @@ fun ProfileHubContent(
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Navigation Actions
-        SettingsCategoryItem(
-            title = "App Settings",
-            subtitle = "Theme, Security & More",
-            icon = Icons.Default.Settings,
-            onClick = onNavigateToSettings
-        )
-
-        SettingsCategoryItem(
-            title = "Recycle Bin",
-            subtitle = "Restore or delete notes",
-            icon = Icons.Default.Delete,
-            onClick = onOpenRecycleBin
-        )
+        // Navigation Actions in a Group
+        SettingsGroup {
+            ExpressiveSettingsItem(
+                title = "App Settings",
+                subtitle = "Theme, Security & More",
+                icon = Icons.Default.Settings,
+                onClick = onNavigateToSettings
+            )
+            HorizontalDivider(
+                modifier = Modifier.padding(horizontal = 20.dp),
+                thickness = 0.5.dp,
+                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+            )
+            ExpressiveSettingsItem(
+                title = "Recycle Bin",
+                subtitle = "Restore or delete notes",
+                icon = Icons.Default.Delete,
+                onClick = onOpenRecycleBin
+            )
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
     }

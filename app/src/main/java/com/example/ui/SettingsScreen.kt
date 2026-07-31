@@ -1,6 +1,5 @@
 package com.example.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -35,26 +34,24 @@ fun SettingsScreen(
     onNavigateToNotifications: () -> Unit,
     onBack: () -> Unit
 ) {
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    var searchQuery by remember { mutableStateOf("") }
     val uriHandler = LocalUriHandler.current
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeTopAppBar(
+            TopAppBar(
                 title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
-                scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.background
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -62,48 +59,72 @@ fun SettingsScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Expressive Settings Items
-            SettingsCategoryItem(
-                title = "Appearance",
-                subtitle = when (themeMode) {
-                    "light" -> "Light mode"
-                    "dark" -> "Dark mode"
-                    else -> "System default"
-                },
-                icon = Icons.Default.Palette,
-                onClick = onNavigateToAppearance
+            // Search Bar
+            SettingsSearchBar(
+                query = searchQuery,
+                onQueryChange = { searchQuery = it }
             )
 
-            SettingsCategoryItem(
-                title = "Security",
-                subtitle = "Master PIN & Encryption",
-                icon = Icons.Default.Security,
-                onClick = onNavigateToSecurity
-            )
+            Spacer(modifier = Modifier.height(8.dp))
 
-            SettingsCategoryItem(
-                title = "Reminders & Reliability",
-                subtitle = "Battery optimization & Notifications",
-                icon = Icons.Default.NotificationsActive,
-                onClick = onNavigateToNotifications
-            )
+            // Group 1: Appearance
+            SettingsGroup {
+                ExpressiveSettingsItem(
+                    title = "Appearance",
+                    subtitle = when (themeMode) {
+                        "light" -> "Light mode"
+                        "dark" -> "Dark mode"
+                        else -> "System default"
+                    },
+                    icon = Icons.Default.Palette,
+                    onClick = onNavigateToAppearance
+                )
+            }
+
+            // Group 2: Security
+            SettingsGroup {
+                ExpressiveSettingsItem(
+                    title = "Security",
+                    subtitle = "Master PIN & Encryption",
+                    icon = Icons.Default.Security,
+                    onClick = onNavigateToSecurity
+                )
+            }
+
+            // Group 3: Reminders
+            SettingsGroup {
+                ExpressiveSettingsItem(
+                    title = "Reminders & Reliability",
+                    subtitle = "Battery optimization & Notifications",
+                    icon = Icons.Default.NotificationsActive,
+                    onClick = onNavigateToNotifications
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // About Section (Group 4)
+            SettingsGroup {
+                ExpressiveSettingsItem(
+                    title = "View on GitHub",
+                    subtitle = "github.com/isaiahscape/bedrock",
+                    icon = Icons.Default.Code,
+                    onClick = { uriHandler.openUri("https://github.com/isaiahscape/bedrock") },
+                    showChevron = false
+                )
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 24.dp), color = MaterialTheme.colorScheme.outlineVariant)
-            Spacer(modifier = Modifier.height(32.dp))
 
-            // About Section
+            // Version Footer
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = "Bedrock",
-                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = "Version 1.0.0",
@@ -115,26 +136,12 @@ fun SettingsScreen(
                 
                 Text(
                     text = "A minimalist monochrome notes editor built for focused writing and local-first security.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     textAlign = TextAlign.Center,
-                    lineHeight = 20.sp
+                    modifier = Modifier.padding(horizontal = 48.dp),
+                    lineHeight = 16.sp
                 )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                Button(
-                    onClick = { uriHandler.openUri("https://github.com/isaiahscape/bedrock") },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant
-                    ),
-                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
-                ) {
-                    Icon(Icons.Default.Code, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text("View on GitHub", fontWeight = FontWeight.SemiBold)
-                }
             }
 
             Spacer(modifier = Modifier.height(48.dp))
