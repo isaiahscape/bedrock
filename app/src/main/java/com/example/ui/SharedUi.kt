@@ -245,19 +245,20 @@ fun FloatingFormattingToolbar(
             .height(56.dp)
             .padding(horizontal = 16.dp)
     ) {
-        Row(
+        androidx.compose.foundation.lazy.LazyRow(
             modifier = Modifier.fillMaxSize(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+            contentPadding = PaddingValues(horizontal = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            FormattingIconButton(label = "H1", onClick = { onAction("# ") })
-            FormattingIconButton(label = "H2", onClick = { onAction("## ") })
-            FormattingIconButton(icon = Icons.Default.TextFields, onClick = { /* Aa placeholder */ })
-            FormattingIconButton(icon = Icons.Default.FormatBold, onClick = { onAction("**") })
-            FormattingIconButton(icon = Icons.Default.FormatItalic, onClick = { onAction("*") })
-            FormattingIconButton(icon = Icons.Default.FormatUnderlined, onClick = { onAction("<u>") })
-            FormattingIconButton(icon = Icons.Default.FormatStrikethrough, onClick = { onAction("~~") })
-            FormattingIconButton(icon = Icons.Default.Image, onClick = { onAction("image_picker") })
+            item { FormattingIconButton(label = "H1", onClick = { onAction("# ") }) }
+            item { FormattingIconButton(label = "H2", onClick = { onAction("## ") }) }
+            item { FormattingIconButton(icon = Icons.Default.TextFields, onClick = { /* Aa placeholder */ }) }
+            item { FormattingIconButton(icon = Icons.Default.FormatBold, onClick = { onAction("**") }) }
+            item { FormattingIconButton(icon = Icons.Default.FormatItalic, onClick = { onAction("*") }) }
+            item { FormattingIconButton(icon = Icons.Default.FormatUnderlined, onClick = { onAction("<u>") }) }
+            item { FormattingIconButton(icon = Icons.Default.FormatStrikethrough, onClick = { onAction("~~") }) }
+            item { FormattingIconButton(icon = Icons.Default.Image, onClick = { onAction("image_picker") }) }
         }
     }
 }

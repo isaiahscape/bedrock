@@ -123,8 +123,8 @@ fun BedrockApp(viewModel: NoteViewModel) {
                     onOpenCommandPalette = { showCommandPalette = true }
                 )
             },
-            topBar = {
-                if (isLargeScreen && openNotes.isNotEmpty()) {
+            topBar = if (isLargeScreen && openNotes.isNotEmpty()) {
+                {
                     WorkspaceTabs(
                         openNotes = openNotes,
                         activeNoteId = activeTabId,
@@ -135,7 +135,7 @@ fun BedrockApp(viewModel: NoteViewModel) {
                         onTabClose = { id -> viewModel.closeTab(id) }
                     )
                 }
-            }
+            } else null
         ) { innerPadding ->
             NavHost(
                 navController = navController,

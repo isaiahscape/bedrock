@@ -9,8 +9,6 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -206,22 +204,6 @@ fun NoteViewScreen(
                     BreadcrumbPillToolbar(
                         onLogoClick = { showActionMenu = !showActionMenu }
                     ) {
-                        IconButton(onClick = onBack) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                                contentDescription = "Back",
-                                tint = Color(0xFFB0B0B0),
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                        IconButton(onClick = { /* Forward */ }) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                                contentDescription = "Forward",
-                                tint = Color(0xFFB0B0B0),
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
                         IconButton(onClick = { /* Search */ }) {
                             Icon(
                                 imageVector = Icons.Filled.Search,

@@ -18,7 +18,7 @@ import androidx.window.core.layout.WindowWidthSizeClass
 fun AdaptiveScaffold(
     showSidebar: Boolean,
     sidebarContent: @Composable () -> Unit,
-    topBar: @Composable () -> Unit,
+    topBar: (@Composable () -> Unit)? = null,
     content: @Composable (PaddingValues) -> Unit
 ) {
     val adaptiveInfo = currentWindowAdaptiveInfo()
@@ -42,8 +42,9 @@ fun AdaptiveScaffold(
         }
 
         Scaffold(
-            topBar = topBar,
-            containerColor = MaterialTheme.colorScheme.background
+            topBar = { topBar?.invoke() },
+            containerColor = MaterialTheme.colorScheme.background,
+            contentWindowInsets = WindowInsets(0, 0, 0, 0)
         ) { padding ->
             content(padding)
         }
