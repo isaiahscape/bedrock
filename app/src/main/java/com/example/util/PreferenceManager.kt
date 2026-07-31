@@ -15,7 +15,7 @@ class PreferenceManager(private val context: Context) {
 
     companion object {
         val THEME_MODE = stringPreferencesKey("theme_mode")
-        val MASTER_PIN = stringPreferencesKey("master_pin")
+        val MASTER_PASSWORD = stringPreferencesKey("master_password")
         val USER_NAME = stringPreferencesKey("user_name")
         val USER_IMAGE_URI = stringPreferencesKey("user_image_uri")
     }
@@ -24,8 +24,8 @@ class PreferenceManager(private val context: Context) {
         preferences[THEME_MODE] ?: "auto"
     }
 
-    val masterPin: Flow<String> = context.dataStore.data.map { preferences ->
-        preferences[MASTER_PIN] ?: "1234"
+    val masterPassword: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[MASTER_PASSWORD] ?: "1234"
     }
 
     val userName: Flow<String> = context.dataStore.data.map { preferences ->
@@ -42,9 +42,9 @@ class PreferenceManager(private val context: Context) {
         }
     }
 
-    suspend fun setMasterPin(pin: String) {
+    suspend fun setMasterPassword(password: String) {
         context.dataStore.edit { preferences ->
-            preferences[MASTER_PIN] = pin
+            preferences[MASTER_PASSWORD] = password
         }
     }
 

@@ -142,15 +142,15 @@ This note is stored with **Encrypted Local Storage**.
 - Algorithm: SHA-256 Key Derivation + Local Cipher Storage
 
 ### Security Checklist
-- [x] Master PIN setup verified
+- [x] Master Password setup verified
 - [x] Encrypted note toggle active
-- [ ] Passcode change cycle scheduled
+- [ ] Password change cycle scheduled
                     """.trimIndent(),
                     createdAt = now - 900000,
                     updatedAt = now - 900000,
                     isPinned = false,
                     isEncrypted = true,
-                    passcodeHash = "1234", // Simple default PIN for demonstration
+                    passcodeHash = "1234", // Simple default password for demonstration
                     tags = "Personal",
                     syncStatus = "LOCAL_ONLY",
                     deviceOrigin = "Encrypted Vault",

@@ -9,7 +9,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -20,11 +19,11 @@ import com.example.viewmodel.NoteViewModel
 @Composable
 fun SecuritySettingsScreen(
     viewModel: NoteViewModel,
-    masterPin: String,
+    masterPassword: String,
     onBack: () -> Unit
 ) {
-    var newPinInput by remember { mutableStateOf("") }
-    var pinSavedMsg by remember { mutableStateOf(false) }
+    var newPasswordInput by remember { mutableStateOf("") }
+    var passwordSavedMsg by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -47,7 +46,7 @@ fun SecuritySettingsScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             Text(
-                text = "Manage your Master PIN for encrypted notes. This PIN is stored locally and never leaves your device.",
+                text = "Manage your Master Password for encrypted notes. This password is stored locally and never leaves your device.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                 modifier = Modifier.padding(vertical = 16.dp)
@@ -56,21 +55,21 @@ fun SecuritySettingsScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
-                value = newPinInput,
+                value = newPasswordInput,
                 onValueChange = { 
-                    newPinInput = it
-                    pinSavedMsg = false
+                    newPasswordInput = it
+                    passwordSavedMsg = false
                 },
-                label = { Text("Set New Master PIN") },
-                placeholder = { Text("Current: $masterPin") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                label = { Text("Set New Master Password") },
+                placeholder = { Text("Current: $masterPassword") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
 
-            if (pinSavedMsg) {
+            if (passwordSavedMsg) {
                 Text(
-                    text = "Master PIN updated successfully!",
+                    text = "Master Password updated successfully!",
                     color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.padding(top = 8.dp)
@@ -81,10 +80,10 @@ fun SecuritySettingsScreen(
 
             Button(
                 onClick = {
-                    if (newPinInput.isNotBlank()) {
-                        viewModel.setMasterPin(newPinInput)
-                        pinSavedMsg = true
-                        newPinInput = ""
+                    if (newPasswordInput.isNotBlank()) {
+                        viewModel.setMasterPassword(newPasswordInput)
+                        passwordSavedMsg = true
+                        newPasswordInput = ""
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -92,7 +91,7 @@ fun SecuritySettingsScreen(
             ) {
                 Icon(Icons.Default.Lock, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Update Master PIN")
+                Text("Update Master Password")
             }
         }
     }

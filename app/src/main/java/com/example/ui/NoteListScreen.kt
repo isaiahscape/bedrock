@@ -335,7 +335,7 @@ fun NoteListScreen(
             title = { Text("Encrypted Note Lock") },
             text = {
                 Column {
-                    Text("This note is protected with local encryption. Enter your passcode or PIN to view:")
+                    Text("This note is protected with local encryption. Enter your Master Password to view:")
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedTextField(
                         value = pinInput,
@@ -343,14 +343,14 @@ fun NoteListScreen(
                             pinInput = it
                             pinError = false
                         },
-                        label = { Text("Passcode / PIN") },
+                        label = { Text("Master Password") },
                         singleLine = true,
                         isError = pinError,
                         modifier = Modifier.fillMaxWidth()
                     )
                     if (pinError) {
                         Text(
-                            text = "Incorrect passcode. Please try again.",
+                            text = "Incorrect password. Please try again.",
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(top = 4.dp)

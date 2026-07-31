@@ -102,7 +102,7 @@ fun SecurityDialog(
                     OutlinedTextField(
                         value = passcode,
                         onValueChange = onPasscodeChange,
-                        label = { Text("PIN") },
+                        label = { Text("Note Password") },
                         modifier = Modifier.fillMaxWidth()
                     )
                 }

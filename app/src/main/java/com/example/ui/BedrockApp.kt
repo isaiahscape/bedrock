@@ -45,7 +45,7 @@ fun BedrockApp(viewModel: NoteViewModel) {
     val isOfflineMode by viewModel.isOfflineMode.collectAsStateWithLifecycle()
     val isSyncing by viewModel.isSyncing.collectAsStateWithLifecycle()
     val syncMessage by viewModel.syncMessage.collectAsStateWithLifecycle()
-    val masterPin by viewModel.masterPin.collectAsStateWithLifecycle()
+    val masterPassword by viewModel.masterPassword.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val userName by viewModel.userName.collectAsStateWithLifecycle()
     val userImageUri by viewModel.userImageUri.collectAsStateWithLifecycle()
@@ -220,15 +220,23 @@ fun BedrockApp(viewModel: NoteViewModel) {
                 }
 
                 composable("settings") {
-                    SettingsScreen(
-                        viewModel = viewModel,
-                        themeMode = themeMode,
-                        onNavigateToAppearance = { navController.navigate("settings_appearance") },
-                        onNavigateToSecurity = { navController.navigate("settings_security") },
-                        onNavigateToNotifications = { navController.navigate("settings_notifications") },
-                        onBack = { navController.popBackStack() }
-                    )
-                }
+                SettingsScreen(
+                    viewModel = viewModel,
+                    themeMode = themeMode,
+                    onNavigateToAppearance = { navController.navigate("settings_appearance") },
+                    onNavigateToSecurity = { navController.navigate("settings_security") },
+                    onNavigateToNotifications = { navController.navigate("settings_notifications") },
+                    onNavigateToSyncBackup = { navController.navigate("settings_sync_backup") },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable("settings_sync_backup") {
+                SyncBackupSettingsScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() }
+                )
+            }
 
                 composable("settings_notifications") {
                     NotificationSettingsScreen(
@@ -246,12 +254,12 @@ fun BedrockApp(viewModel: NoteViewModel) {
                 }
 
                 composable("settings_security") {
-                    SecuritySettingsScreen(
-                        viewModel = viewModel,
-                        masterPin = masterPin ?: "1234",
-                        onBack = { navController.popBackStack() }
-                    )
-                }
+                SecuritySettingsScreen(
+                    viewModel = viewModel,
+                    masterPassword = masterPassword ?: "1234",
+                    onBack = { navController.popBackStack() }
+                )
+            }
             }
         }
     }

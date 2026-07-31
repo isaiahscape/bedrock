@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,6 +33,7 @@ fun SettingsScreen(
     onNavigateToAppearance: () -> Unit,
     onNavigateToSecurity: () -> Unit,
     onNavigateToNotifications: () -> Unit,
+    onNavigateToSyncBackup: () -> Unit,
     onBack: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -85,13 +87,23 @@ fun SettingsScreen(
             SettingsGroup {
                 ExpressiveSettingsItem(
                     title = "Security",
-                    subtitle = "Master PIN & Encryption",
+                    subtitle = "Master Password & Encryption",
                     icon = Icons.Default.Security,
                     onClick = onNavigateToSecurity
                 )
             }
 
-            // Group 3: Reminders
+            // Group 3: Sync & Backup
+            SettingsGroup {
+                ExpressiveSettingsItem(
+                    title = "Sync & Backup",
+                    subtitle = "Local backups & Cloud Sync",
+                    icon = Icons.Default.Sync,
+                    onClick = onNavigateToSyncBackup
+                )
+            }
+
+            // Group 4: Reminders
             SettingsGroup {
                 ExpressiveSettingsItem(
                     title = "Reminders & Reliability",

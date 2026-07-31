@@ -33,14 +33,14 @@ class NoteViewModel(
     private val _unlockedNoteIds = MutableStateFlow<Set<Long>>(emptySet())
     val unlockedNoteIds: StateFlow<Set<Long>> = _unlockedNoteIds.asStateFlow()
 
-    // Theme and Master PIN from DataStore
+    // Theme and Master Password from DataStore
     val themeMode: StateFlow<String> = preferenceManager.themeMode.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = "auto"
     )
 
-    val masterPin: StateFlow<String?> = preferenceManager.masterPin.stateIn(
+    val masterPassword: StateFlow<String?> = preferenceManager.masterPassword.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = "1234"
@@ -132,7 +132,7 @@ class NoteViewModel(
     }
 
     fun unlockNote(noteId: Long, pinInput: String, note: Note): Boolean {
-        val targetPasscode = note.passcodeHash ?: masterPin.value ?: ""
+        val targetPasscode = note.passcodeHash ?: masterPassword.value ?: ""
         val isValid = EncryptionUtil.verifyPasscode(pinInput, targetPasscode)
         if (isValid) {
             _unlockedNoteIds.update { it + noteId }
@@ -150,9 +150,9 @@ class NoteViewModel(
         }
     }
 
-    fun setMasterPin(pin: String) {
+    fun setMasterPassword(password: String) {
         viewModelScope.launch {
-            preferenceManager.setMasterPin(pin)
+            preferenceManager.setMasterPassword(password)
         }
     }
 
@@ -200,7 +200,7 @@ class NoteViewModel(
                 tags = tags,
                 isPinned = isPinned,
                 isEncrypted = isEncrypted,
-                passcodeHash = if (isEncrypted) passcode?.ifBlank { masterPin.value ?: "1234" } else null,
+                passcodeHash = if (isEncrypted) passcode?.ifBlank { masterPassword.value ?: "1234" } else null,
                 type = type,
                 reminderTime = reminderTime
             )
@@ -311,6 +311,23 @@ class NoteViewModel(
         viewModelScope.launch {
             val count = repository.importNotesJson(jsonStr)
             onComplete(count)
+        }
+    }
+
+    suspend fun getEncryptedBackup(password: String): String {
+        val json = repository.exportNotesJson(notes.value)
+        return EncryptionUtil.encryptContent(json, password)
+    }
+
+    fun importEncryptedBackup(encryptedData: String, password: String, onComplete: (Int) -> Unit) {
+        viewModelScope.launch {
+            val decryptedJson = EncryptionUtil.decryptContent(encryptedData, password)
+            if (decryptedJson == "[Encrypted Content - Invalid Key]") {
+                onComplete(-1)
+            } else {
+                val count = repository.importNotesJson(decryptedJson)
+                onComplete(count)
+            }
         }
     }
 }
