@@ -1,5 +1,11 @@
 package com.example.ui
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,14 +15,14 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.example.viewmodel.NoteViewModel
 import kotlinx.coroutines.launch
 
@@ -26,6 +32,7 @@ fun SyncBackupSettingsScreen(
     viewModel: NoteViewModel,
     onBack: () -> Unit
 ) {
+    val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
     val masterPassword by viewModel.masterPassword.collectAsState()
@@ -36,6 +43,36 @@ fun SyncBackupSettingsScreen(
     var restorePassword by remember { mutableStateOf("") }
     var showRestoreDialog by remember { mutableStateOf(false) }
     var restoreMessage by remember { mutableStateOf<String?>(null) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            viewModel.exportBackupToFile(context, masterPassword ?: "1234") { path ->
+                Toast.makeText(context, "Backup saved to: $path", Toast.LENGTH_LONG).show()
+            }
+        } else {
+            Toast.makeText(context, "Storage permission required for legacy devices", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    fun handleExportToDownload() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // MediaStore handles it without WRITE permission
+            viewModel.exportBackupToFile(context, masterPassword ?: "1234") { path ->
+                Toast.makeText(context, "Backup saved to: $path", Toast.LENGTH_LONG).show()
+            }
+        } else {
+            val permission = Manifest.permission.WRITE_EXTERNAL_STORAGE
+            if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED) {
+                viewModel.exportBackupToFile(context, masterPassword ?: "1234") { path ->
+                    Toast.makeText(context, "Backup saved to: $path", Toast.LENGTH_LONG).show()
+                }
+            } else {
+                permissionLauncher.launch(permission)
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -82,6 +119,13 @@ fun SyncBackupSettingsScreen(
                             showBackupDialog = true
                         }
                     }
+                )
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+                ExpressiveSettingsItem(
+                    title = "Export to Download/Bedrock",
+                    subtitle = "Save encrypted JSON file locally",
+                    icon = Icons.Default.SaveAlt,
+                    onClick = { handleExportToDownload() }
                 )
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                 ExpressiveSettingsItem(

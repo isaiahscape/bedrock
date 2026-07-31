@@ -13,6 +13,7 @@ import com.example.data.SyncLog
 import com.example.data.Tag
 import com.example.receiver.ReminderReceiver
 import com.example.util.EncryptionUtil
+import com.example.util.FileHelper
 import com.example.util.PreferenceManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -180,7 +181,7 @@ class NoteViewModel(
         }
     }
 
-    fun generateLogsFile(context: android.content.Context, onComplete: (String) -> Unit) {
+    fun generateLogsFile(context: Context, onComplete: (String) -> Unit) {
         viewModelScope.launch {
             val logs = StringBuilder()
             logs.append("Bedrock Debug Logs\n")
@@ -195,9 +196,22 @@ class NoteViewModel(
             }
 
             val fileName = "bedrock_logs_${System.currentTimeMillis()}.txt"
-            val file = java.io.File(context.filesDir, fileName)
-            file.writeText(logs.toString())
-            onComplete(file.absolutePath)
+            val path = FileHelper.saveStringToDownloadFolder(context, fileName, logs.toString())
+            onComplete(path ?: "Error saving logs")
+        }
+    }
+
+    fun exportBackupToFile(context: Context, password: String, onComplete: (String) -> Unit) {
+        viewModelScope.launch {
+            val encryptedData = getEncryptedBackup(password)
+            val fileName = "bedrock_backup_${System.currentTimeMillis()}.json"
+            val path = FileHelper.saveStringToDownloadFolder(
+                context = context,
+                fileName = fileName,
+                content = encryptedData,
+                mimeType = "application/json"
+            )
+            onComplete(path ?: "Error saving backup")
         }
     }
 

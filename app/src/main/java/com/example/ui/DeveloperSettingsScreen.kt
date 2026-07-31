@@ -55,7 +55,7 @@ fun DeveloperSettingsScreen(
             SettingsGroup {
                 ExpressiveSettingsItem(
                     title = "Generate logs.txt",
-                    subtitle = "Gather device and app sync logs",
+                    subtitle = "Saved to Download/Bedrock",
                     icon = Icons.Default.BugReport,
                     onClick = {
                         viewModel.generateLogsFile(context) { path ->
