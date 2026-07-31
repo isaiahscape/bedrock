@@ -152,8 +152,9 @@ fun ActionPopUpMenu(
 ) {
     Surface(
         shape = RoundedCornerShape(24.dp),
-        color = Color(0xFF1E1E1E),
-        modifier = Modifier.wrapContentWidth()
+        color = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp),
+        modifier = Modifier.wrapContentWidth(),
+        tonalElevation = 4.dp
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -218,12 +219,12 @@ fun ActionMenuItem(
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = Color(0xFFB0B0B0),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(20.dp)
         )
         Text(
             text = label,
-            color = Color(0xFFB0B0B0),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 14.sp,
             fontWeight = FontWeight.Medium
         )
@@ -238,8 +239,9 @@ fun BreadcrumbPillToolbar(
 ) {
     Surface(
         shape = RoundedCornerShape(32.dp),
-        color = Color(0xFF1E1E1E),
-        modifier = modifier.wrapContentWidth()
+        color = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp),
+        modifier = modifier.wrapContentWidth(),
+        tonalElevation = 4.dp
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
@@ -258,7 +260,7 @@ fun BreadcrumbPillToolbar(
 
             VerticalDivider(
                 modifier = Modifier.height(24.dp).width(1.dp),
-                color = Color(0xFF333333)
+                color = MaterialTheme.colorScheme.outlineVariant
             )
 
             content()
@@ -273,11 +275,12 @@ fun FloatingFormattingToolbar(
 ) {
     Surface(
         shape = RoundedCornerShape(32.dp),
-        color = Color(0xFF1E1E1E),
+        color = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp),
         modifier = modifier
             .fillMaxWidth()
             .height(56.dp)
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 16.dp),
+        tonalElevation = 4.dp
     ) {
         androidx.compose.foundation.lazy.LazyRow(
             modifier = Modifier.fillMaxSize(),
@@ -308,13 +311,13 @@ private fun FormattingIconButton(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = Color(0xFFB0B0B0),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(22.dp)
             )
         } else if (label != null) {
             Text(
                 text = label,
-                color = Color(0xFFB0B0B0),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold
             )

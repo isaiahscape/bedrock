@@ -430,16 +430,16 @@ fun MarkdownEditor(
                         onLogoClick = { showActionMenu = !showActionMenu }
                     ) {
                         IconButton(onClick = { /* Undo */ }) {
-                            Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo", tint = Color(0xFFB0B0B0))
+                            Icon(Icons.AutoMirrored.Filled.Undo, contentDescription = "Undo", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         IconButton(onClick = { /* Redo */ }) {
-                            Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo", tint = Color(0xFFB0B0B0))
+                            Icon(Icons.AutoMirrored.Filled.Redo, contentDescription = "Redo", tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         IconButton(onClick = { isSearchActive = !isSearchActive }) {
                             Icon(
                                 imageVector = Icons.Filled.Search,
                                 contentDescription = "Search",
-                                tint = if (isSearchActive) MaterialTheme.colorScheme.primary else Color(0xFFB0B0B0),
+                                tint = if (isSearchActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -448,13 +448,13 @@ fun MarkdownEditor(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
                                     .size(22.dp)
-                                    .border(1.5.dp, Color(0xFFB0B0B0), RoundedCornerShape(6.dp))
+                                    .border(1.5.dp, MaterialTheme.colorScheme.onSurfaceVariant, RoundedCornerShape(6.dp))
                             ) {
                                 Text(
                                     text = openNotes.size.toString(),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFB0B0B0)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }

@@ -266,7 +266,7 @@ fun NoteViewScreen(
                             Icon(
                                 imageVector = Icons.Filled.Search,
                                 contentDescription = "Search",
-                                tint = if (isSearchActive) MaterialTheme.colorScheme.primary else Color(0xFFB0B0B0),
+                                tint = if (isSearchActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -277,7 +277,7 @@ fun NoteViewScreen(
                             Icon(
                                 imageVector = Icons.Default.Edit,
                                 contentDescription = "Edit Note",
-                                tint = Color(0xFFB0B0B0),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -286,13 +286,13 @@ fun NoteViewScreen(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
                                     .size(22.dp)
-                                    .border(1.5.dp, Color(0xFFB0B0B0), RoundedCornerShape(6.dp))
+                                    .border(1.5.dp, MaterialTheme.colorScheme.onSurfaceVariant, RoundedCornerShape(6.dp))
                             ) {
                                 Text(
                                     text = openNotes.size.toString(),
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFFB0B0B0)
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
                         }
