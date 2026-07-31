@@ -22,7 +22,7 @@
 - **Material Expressive Settings**: A modern, hierarchical settings structure with status summaries and bold headers.
 - **Local-First Security**: Secure sensitive notes with local SHA-256 encryption and PIN/passcode protection.
 - **Organization**: Powerful tag-based categorization with a searchable management dialog and instant text filtering.
-- **Backup & Restore**: Export and import your notes as JSON for cross-device manual synchronization.
+- **Backup & Restore**: Export and import your notes as JSON for cross-device manual synchronization. Remote Cloud Sync is currently a work-in-progress (WIP).
 
 ## Tech Stack
 
