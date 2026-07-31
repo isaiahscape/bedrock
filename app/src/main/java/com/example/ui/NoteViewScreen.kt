@@ -38,6 +38,7 @@ fun NoteViewScreen(
     onOpenCommandPalette: () -> Unit,
     onEditNote: (Long) -> Unit
 ) {
+    val context = LocalContext.current
     val note = remember(noteId, allNotes) {
         allNotes.find { it.id == noteId }
     }
@@ -125,6 +126,21 @@ fun NoteViewScreen(
                             
                             MarkdownContent(
                                 content = note.content,
+                                isEditable = true, // Allow resizing in view mode
+                                onContentChange = { newContent ->
+                                    viewModel.saveNote(
+                                        id = note.id,
+                                        title = note.title,
+                                        content = newContent,
+                                        tags = note.tags,
+                                        isPinned = note.isPinned,
+                                        isEncrypted = note.isEncrypted,
+                                        passcode = note.passcodeHash,
+                                        type = note.type,
+                                        reminderTime = note.reminderTime,
+                                        context = context
+                                    )
+                                },
                                 onTodoToggle = { lineIndex ->
                                     viewModel.toggleTodoItem(note, lineIndex)
                                 }
@@ -220,8 +236,6 @@ fun NoteViewScreen(
             }
         }
     }
-
-    val context = LocalContext.current
 
     if (showTemplateDialog && note != null) {
         TemplateSelectionDialog(

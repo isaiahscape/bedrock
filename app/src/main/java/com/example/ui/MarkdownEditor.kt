@@ -1,5 +1,7 @@
 package com.example.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -60,6 +62,15 @@ fun MarkdownEditor(
     var showReminderPicker by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+
+    val imageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val imageMarkdown = "\n![Image]($it){w=300}\n"
+            content += imageMarkdown
+        }
+    }
 
     val currentTags = remember(tagsString) {
         if (tagsString.isBlank()) emptyList()
@@ -224,7 +235,11 @@ fun MarkdownEditor(
                                     }
                                     EditorViewMode.PREVIEW -> {
                                         Box(modifier = Modifier.padding(horizontal = 12.dp)) {
-                                            MarkdownContent(content = content) { lineIndex ->
+                                            MarkdownContent(
+                                                content = content,
+                                                isEditable = true,
+                                                onContentChange = { content = it }
+                                            ) { lineIndex ->
                                                 content = MarkdownHelper.toggleTodoAtLine(content, lineIndex)
                                             }
                                         }
@@ -244,7 +259,11 @@ fun MarkdownEditor(
                                             )
                                             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                                             Box(modifier = Modifier.padding(horizontal = 12.dp)) {
-                                                MarkdownContent(content = content) { lineIndex ->
+                                                MarkdownContent(
+                                                    content = content,
+                                                    isEditable = true,
+                                                    onContentChange = { content = it }
+                                                ) { lineIndex ->
                                                     content = MarkdownHelper.toggleTodoAtLine(content, lineIndex)
                                                 }
                                             }
@@ -311,7 +330,13 @@ fun MarkdownEditor(
 
                     if (viewMode != EditorViewMode.PREVIEW) {
                         FloatingFormattingToolbar(
-                            onAction = { syntax -> content = insertFormatting(content, syntax) }
+                            onAction = { syntax ->
+                                if (syntax == "image_picker") {
+                                    imageLauncher.launch("image/*")
+                                } else {
+                                    content = insertFormatting(content, syntax)
+                                }
+                            }
                         )
                     }
 

@@ -1,5 +1,7 @@
 package com.example.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -83,12 +85,21 @@ fun TodoEditor(
     var showTagDialog by remember { mutableStateOf(false) }
     var showReminderPicker by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+
+    val imageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val imageMarkdown = "![Image]($it){w=300}"
+            items.add(TodoItemState(text = imageMarkdown, isChecked = false))
+        }
+    }
+
     val currentTags = remember(tagsString) {
         if (tagsString.isBlank()) emptyList()
         else tagsString.split(",").map { it.trim() }.filter { it.isNotEmpty() }
     }
-
-    val context = LocalContext.current
 
     fun toggleTag(tagName: String) {
         val tags = if (currentTags.contains(tagName)) {
@@ -150,6 +161,12 @@ fun TodoEditor(
                             imageVector = if (reminderTime != null) Icons.Default.NotificationsActive else Icons.Default.NotificationsNone,
                             contentDescription = "Set Reminder",
                             tint = if (reminderTime != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    IconButton(onClick = { imageLauncher.launch("image/*") }) {
+                        Icon(
+                            imageVector = Icons.Default.Image,
+                            contentDescription = "Insert Image"
                         )
                     }
                 },

@@ -257,6 +257,7 @@ fun FloatingFormattingToolbar(
             FormattingIconButton(icon = Icons.Default.FormatItalic, onClick = { onAction("*") })
             FormattingIconButton(icon = Icons.Default.FormatUnderlined, onClick = { onAction("<u>") })
             FormattingIconButton(icon = Icons.Default.FormatStrikethrough, onClick = { onAction("~~") })
+            FormattingIconButton(icon = Icons.Default.Image, onClick = { onAction("image_picker") })
         }
     }
 }

@@ -11,21 +11,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.example.ui.ImageBlock
 
 object MarkdownHelper {
 
     /**
-     * Toggles a checkbox in the given markdown text at line [lineIndex].
+     * Toggles a checkbox in the given markdown text at line targetLineIndex.
      */
     fun toggleTodoAtLine(content: String, targetLineIndex: Int): String {
         val lines = content.lines().toMutableList()
@@ -109,6 +114,8 @@ object MarkdownHelper {
 fun MarkdownContent(
     content: String,
     modifier: Modifier = Modifier,
+    isEditable: Boolean = false,
+    onContentChange: ((String) -> Unit)? = null,
     onTodoToggle: ((lineIndex: Int) -> Unit)? = null
 ) {
     val lines = content.lines()
@@ -121,6 +128,55 @@ fun MarkdownContent(
     ) {
         lines.forEachIndexed { index, line ->
             val trimmed = line.trim()
+
+            // Image Parsing: ![alt](uri){w=300}
+            val imageRegex = """!\[(.*?)]\((.*?)\)(\{w=(\d+)})?""".toRegex()
+            val match = imageRegex.matchEntire(trimmed)
+            if (match != null) {
+                val alt = match.groupValues[1]
+                val uri = match.groupValues[2]
+                val widthStr = match.groupValues.getOrNull(4)
+                val width = widthStr?.toFloatOrNull() ?: 300f
+                
+                ImageBlock(
+                    uri = uri,
+                    initialWidth = width,
+                    isEditable = isEditable,
+                    onResize = { newWidth ->
+                        if (onContentChange != null) {
+                            val newWidthInt = newWidth.toInt()
+                            val updatedLine = "![$alt]($uri){w=$newWidthInt}"
+                            val updatedLines = lines.toMutableList()
+                            updatedLines[index] = updatedLine
+                            onContentChange(updatedLines.joinToString("\n"))
+                        }
+                    },
+                    onDelete = {
+                        if (onContentChange != null) {
+                            val updatedLines = lines.toMutableList()
+                            updatedLines.removeAt(index)
+                            onContentChange(updatedLines.joinToString("\n"))
+                        }
+                    },
+                    onMoveUp = {
+                        if (onContentChange != null && index > 0) {
+                            val updatedLines = lines.toMutableList()
+                            val item = updatedLines.removeAt(index)
+                            updatedLines.add(index - 1, item)
+                            onContentChange(updatedLines.joinToString("\n"))
+                        }
+                    },
+                    onMoveDown = {
+                        if (onContentChange != null && index < lines.size - 1) {
+                            val updatedLines = lines.toMutableList()
+                            val item = updatedLines.removeAt(index)
+                            updatedLines.add(index + 1, item)
+                            onContentChange(updatedLines.joinToString("\n"))
+                        }
+                    }
+                )
+                return@forEachIndexed
+            }
 
             // Code block delimiter ```
             if (trimmed.startsWith("```")) {

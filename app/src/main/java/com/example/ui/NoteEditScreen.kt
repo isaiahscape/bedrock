@@ -1,5 +1,7 @@
 package com.example.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
@@ -25,6 +27,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.platform.LocalContext
 import com.example.data.Note
 import com.example.data.Tag
+import com.example.util.MarkdownContent
+import com.example.util.MarkdownHelper
 import com.example.viewmodel.NoteViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -83,6 +87,7 @@ fun NoteEditScreen(
     var passcode by remember { mutableStateOf(existingNote?.passcodeHash ?: "1234") }
     var reminderTime by remember { mutableStateOf(existingNote?.reminderTime) }
 
+    var viewMode by remember { mutableStateOf(EditorViewMode.EDIT) }
     var showSecurityDialog by remember { mutableStateOf(false) }
     var showActionMenu by remember { mutableStateOf(false) }
     var showTemplateDialog by remember { mutableStateOf(false) }
@@ -90,6 +95,15 @@ fun NoteEditScreen(
     var showReminderPicker by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+
+    val imageLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            val imageMarkdown = "\n![Image]($it){w=300}\n"
+            content += imageMarkdown
+        }
+    }
 
     val currentTags = remember(tagsString) {
         if (tagsString.isBlank()) emptyList()
@@ -142,6 +156,19 @@ fun NoteEditScreen(
                             imageVector = if (isEncrypted) Icons.Default.Lock else Icons.Outlined.Lock,
                             contentDescription = "Security",
                             tint = if (isEncrypted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    IconButton(
+                        onClick = {
+                            viewMode = when (viewMode) {
+                                EditorViewMode.EDIT -> EditorViewMode.PREVIEW
+                                else -> EditorViewMode.EDIT
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = if (viewMode == EditorViewMode.EDIT) Icons.Default.Visibility else Icons.Default.Edit,
+                            contentDescription = "Toggle Preview"
                         )
                     }
                     IconButton(onClick = { showReminderPicker = true }) {
@@ -214,21 +241,33 @@ fun NoteEditScreen(
                                 }
                             }
 
-                            TextField(
-                                value = content,
-                                onValueChange = { content = it },
-                                placeholder = { Text("Note") },
-                                textStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 24.sp),
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = Color.Transparent,
-                                    unfocusedContainerColor = Color.Transparent,
-                                    focusedIndicatorColor = Color.Transparent,
-                                    unfocusedIndicatorColor = Color.Transparent
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                            )
+                            if (viewMode == EditorViewMode.EDIT) {
+                                TextField(
+                                    value = content,
+                                    onValueChange = { content = it },
+                                    placeholder = { Text("Note") },
+                                    textStyle = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 24.sp),
+                                    colors = TextFieldDefaults.colors(
+                                        focusedContainerColor = Color.Transparent,
+                                        unfocusedContainerColor = Color.Transparent,
+                                        focusedIndicatorColor = Color.Transparent,
+                                        unfocusedIndicatorColor = Color.Transparent
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp)
+                                )
+                            } else {
+                                Box(modifier = Modifier.padding(horizontal = 16.dp)) {
+                                    MarkdownContent(
+                                        content = content,
+                                        isEditable = true,
+                                        onContentChange = { content = it }
+                                    ) { lineIndex ->
+                                        content = MarkdownHelper.toggleTodoAtLine(content, lineIndex)
+                                    }
+                                }
+                            }
                         }
                     }
 
@@ -287,7 +326,13 @@ fun NoteEditScreen(
                     }
 
                     FloatingFormattingToolbar(
-                        onAction = { syntax -> content = insertFormatting(content, syntax) }
+                        onAction = { syntax ->
+                            if (syntax == "image_picker") {
+                                imageLauncher.launch("image/*")
+                            } else {
+                                content = insertFormatting(content, syntax)
+                            }
+                        }
                     )
 
                     BreadcrumbPillToolbar(
